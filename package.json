@@ -1,0 +1,44 @@
+{
+    "name": "pixi-loopkit",
+    "version": "0.1.0",
+    "description": "Create cool experiments and generate looping gifs as output",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/tstriker/pixi-loopkit.git"
+    },
+    "keywords": [
+        "pixi",
+        "graphics",
+        "experimental",
+        "visualisation",
+        "loop"
+    ],
+    "files": [
+        "src/*"
+    ],
+    "scripts": {
+        "serve": "webpack-dev-server --mode=development",
+        "build": "webpack --mode=production"
+    },
+    "main": "src/index.js",
+    "author": "Tom Striker",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/tstriker/pixi-loopkit/issues"
+    },
+    "homepage": "https://github.com/tstriker/pixi-loopkit#readme",
+    "dependencies": {
+        "chroma-js": "^2.1.0",
+        "pixi.js": "^5.3.3"
+    },
+    "devDependencies": {
+        "@babel/core": "^7.11.4",
+        "babel-loader": "^8.1.0",
+        "core-js": "^3.6.5",
+        "html-webpack-plugin": "^4.3.0",
+        "path": "^0.12.7",
+        "webpack": "^4.44.1",
+        "webpack-cli": "^3.3.12",
+        "webpack-dev-server": "^3.11.0"
+    }
+}
