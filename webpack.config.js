@@ -6,9 +6,10 @@ module.exports = {
     context: path.resolve(__dirname),
     entry: {
         "pixi-loopkit": path.resolve(__dirname, "src"),
-        docs: path.resolve(__dirname, "docs/docs.js"),
+        docs: path.resolve(__dirname, "docs-src/docs.js"),
     },
     output: {
+        path: path.resolve(__dirname, "docs"),
         filename: "[name].js",
     },
 
@@ -18,7 +19,7 @@ module.exports = {
     },
     plugins: [
         new HtmlWebPackPlugin({
-            template: path.resolve(__dirname, "docs/index.html"),
+            template: path.resolve(__dirname, "docs-src/index.html"),
             filename: "index.html",
         }),
     ],
