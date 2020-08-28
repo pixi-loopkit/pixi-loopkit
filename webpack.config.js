@@ -25,5 +25,7 @@ module.exports = {
     ],
 
     stats: "errors-warnings",
-    //devtool: "inline-source-map",
+    optimization: {
+        minimize: false,
+    },
 };
