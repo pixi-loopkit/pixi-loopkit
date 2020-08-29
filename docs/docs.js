@@ -411,10 +411,13 @@ class loopkit_LoopKit {
         }
     }
 
-    export(filename) {
-        let renderTexture = external_PIXI_["RenderTexture"].create({width: this.width * 2, height: this.height * 2});
-        renderTexture.setResolution(2);
-        this.app.renderer.render(this.app.stage, renderTexture);
+    export(filename, rt) {
+        let renderTexture = rt || external_PIXI_["RenderTexture"].create({
+            width: this.width,
+            height: this.height,
+            resolution: 4 ,
+        });
+        this.app.renderer.render(this.app.stage, renderTexture, false);
 
         let objectURL = this.app.renderer.plugins.extract.base64(renderTexture, "image/png", 1);
 
@@ -431,6 +434,12 @@ class loopkit_LoopKit {
     exportLoop() {
         this.stop();
         this.looper.frameFull = 0;
+        let rt = external_PIXI_["RenderTexture"].create({
+            width: this.width,
+            height: this.height,
+            resolution: 4 ,
+        });
+
         for (let i = 0; i <= this.looper.frames; i++) {
             this._onFrame(false);
             let paddedIdx = ("0000" + i).slice(-4);
