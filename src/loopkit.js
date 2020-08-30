@@ -1,6 +1,11 @@
 import {Loop, hexColor} from ".";
-
-import * as PIXI from "pixi.js";
+let PIXI = {};
+try {
+    PIXI = require("pixi.js");
+} catch (e) {
+    // on serverside rendering, rather than dying gracefully, pixi will explode as it tries to access window
+    console.log("Failed to import PIXI somehow. You're on your own!");
+}
 
 class LoopKit {
     constructor({canvas, onFrame, antialias, bgColor, loopSeconds}) {
@@ -103,11 +108,13 @@ class LoopKit {
     }
 
     export(filename, rt) {
-        let renderTexture = rt || PIXI.RenderTexture.create({
-            width: this.width,
-            height: this.height,
-            resolution: 2,
-        });
+        let renderTexture =
+            rt ||
+            PIXI.RenderTexture.create({
+                width: this.width,
+                height: this.height,
+                resolution: 2,
+            });
         this.app.renderer.render(this.app.stage, renderTexture, false);
 
         let objectURL = this.app.renderer.plugins.extract.base64(renderTexture, "image/png", 1);
@@ -128,7 +135,7 @@ class LoopKit {
         let rt = PIXI.RenderTexture.create({
             width: this.width,
             height: this.height,
-            resolution: 4 ,
+            resolution: 4,
         });
 
         for (let i = 0; i <= this.looper.frames; i++) {
