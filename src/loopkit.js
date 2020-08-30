@@ -80,8 +80,8 @@ class LoopKit {
         });
     }
 
-    addChild(child) {
-        this.graphics.addChild(child);
+    addChild(...child) {
+        this.graphics.addChild(...child);
     }
     removeChild(child) {
         this.graphics.removeChild(child);
@@ -106,7 +106,7 @@ class LoopKit {
         let renderTexture = rt || PIXI.RenderTexture.create({
             width: this.width,
             height: this.height,
-            resolution: 4 ,
+            resolution: 2,
         });
         this.app.renderer.render(this.app.stage, renderTexture, false);
 

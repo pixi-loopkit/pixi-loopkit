@@ -28,6 +28,7 @@
     },
     "homepage": "https://github.com/tstriker/pixi-loopkit#readme",
     "dependencies": {
+        "bezier-easing": "^2.1.0",
         "chroma-js": "^2.1.0",
         "pixi.js": "^5.3.3"
     },
