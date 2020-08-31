@@ -10,7 +10,6 @@ export {scale};
 const loopkit = {LoopKit, Props, Loop, scale};
 export default {loopkit};
 
-
 import chroma from "chroma-js";
 let hexColor = color => chroma(color).num();
-export {hexColor}
+export {hexColor};

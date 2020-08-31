@@ -20,7 +20,7 @@ class Loop {
     set loopSeconds(seconds) {
         // when duration of loop is changed on the fly, we try to stay roughly in the same place
         let frame = this.frame;
-        this._loopSeconds = seconds
+        this._loopSeconds = seconds;
         this.frameFull = Math.floor(this.frames * frame);
     }
 

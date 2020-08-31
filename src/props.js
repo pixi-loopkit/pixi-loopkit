@@ -5,7 +5,7 @@ function Props(props) {
 
     let watchers = [];
     let currentStack = [];
-    let compute = (prop) => {
+    let compute = prop => {
         currentStack.push(prop);
         let val = calc[prop](context);
         currentStack.splice(currentStack.lastIndexOf(prop), 1);
@@ -13,17 +13,17 @@ function Props(props) {
     };
 
     let notify = (prop, value, prevValue) => {
-        watchers.forEach((watcher) => {
+        watchers.forEach(watcher => {
             watcher(prop, value, prevValue);
         });
     };
 
     let store = {
-        addWatcher: (func) => {
+        addWatcher: func => {
             watchers.push(func);
         },
 
-        removeWatcher: (func) => {
+        removeWatcher: func => {
             watchers.splice(watchers.indexOf(func), 1);
         },
 
@@ -33,7 +33,7 @@ function Props(props) {
             let keys = Object.keys(values);
             let deps = {};
             Object.entries(dependants).forEach(([key, keyDependants]) => {
-                keyDependants.forEach((keyDependant) => {
+                keyDependants.forEach(keyDependant => {
                     deps[keyDependant] = deps[keyDependant] || [];
                     deps[keyDependant].push(key);
                 });
@@ -49,38 +49,38 @@ function Props(props) {
                     throw new Error("State seems to have circular dependencies; bailing");
                 }
 
-                keys.forEach((key) => {
-                    let dependencies = (deps[key] || []).filter((d) => !order.includes(d) && values[d] !== undefined);
+                keys.forEach(key => {
+                    let dependencies = (deps[key] || []).filter(d => !order.includes(d) && values[d] !== undefined);
                     if (dependencies.length == 0) {
                         order.push(key);
                     }
                 });
 
-                keys = keys.filter((key) => !order.includes(key));
+                keys = keys.filter(key => !order.includes(key));
                 if (keys.length > 0) {
                     moveAvailable();
                 }
             }
             moveAvailable();
 
-            order.forEach((field) => {
+            order.forEach(field => {
                 context[field] = values[field];
             });
         },
         refresh() {
             // force a recalculation of all properties; generally speaking you shouldn't need this function
-            Object.keys(calc).forEach((prop) => {
+            Object.keys(calc).forEach(prop => {
                 context[prop] = compute(prop);
             });
         },
 
         _dependencies: () => dependants,
-        derivedProps: () => Object.fromEntries(Object.keys(calc).map((key) => [key, context[key]])),
+        derivedProps: () => Object.fromEntries(Object.keys(calc).map(key => [key, context[key]])),
     };
 
     context = new Proxy(store, {
         get(store, prop) {
-            currentStack.forEach((dependant) => {
+            currentStack.forEach(dependant => {
                 if (!(dependants[prop] || []).includes(dependant)) {
                     dependants[prop] = dependants[prop] || [];
                     dependants[prop].push(dependant);
@@ -129,7 +129,7 @@ function Props(props) {
                     // we recalc the dependencies on each set no matter as the dependant might depend on a derived
                     // calculation that has been replaced since. there is bit of a 3 cup situation
                     // essentially this is to bust a forced value in a mid-layer
-                    dependants[prop].forEach((dependant) => {
+                    dependants[prop].forEach(dependant => {
                         // recalc all dependants
                         context[dependant] = compute(dependant);
                     });
@@ -176,8 +176,8 @@ function pseudoTest() {
     let z = Props({
         a: 3,
         b: 4,
-        multiply: (vars) => `a * b = ${vars.a * vars.b}`,
-        decorate: (vars) => `*** decorate much: ${vars.multiply} ***`,
+        multiply: vars => `a * b = ${vars.a * vars.b}`,
+        decorate: vars => `*** decorate much: ${vars.multiply} ***`,
     });
 
     z.addWatcher((prop, val, prev) => {
