@@ -91,6 +91,9 @@ class LoopKit {
     removeChild(child) {
         this.graphics.removeChild(child);
     }
+    children() {
+        return this.graphics.children;
+    }
 
     setDimensions(evt) {
         let box = this.canvas.parentElement.getBoundingClientRect();
