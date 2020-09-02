@@ -1,5 +1,7 @@
 function Props(props) {
+    let store = {}
     let calc = {};
+
     let dependants = {};
     let context;
 
@@ -18,7 +20,7 @@ function Props(props) {
         });
     };
 
-    let store = {
+    let handler = {
         addWatcher: func => {
             watchers.push(func);
         },
@@ -75,11 +77,19 @@ function Props(props) {
         },
 
         _dependencies: () => dependants,
-        derivedProps: () => Object.fromEntries(Object.keys(calc).map(key => [key, context[key]])),
+        derivedProps: () => Object.fromEntries(Object.keys(calc).map(key => [key, store[key]])),
+
+        toUrlParams: () => Object.fromEntries(Object.entries(store).map(([key, val]) => [key, toBase62(val)])),
+        fromUrlParams: () => Object.fromEntries(Object.entries(store).map(([key, val]) => [key, fromBase62(val)])),
     };
 
-    context = new Proxy(store, {
-        get(store, prop) {
+    context = new Proxy(handler, {
+        get(handler, prop) {
+            if (Reflect.has(handler, prop)) {
+                // access to own functions
+                return handler[prop];
+            }
+
             currentStack.forEach(dependant => {
                 if (!(dependants[prop] || []).includes(dependant)) {
                     dependants[prop] = dependants[prop] || [];
@@ -101,7 +111,7 @@ function Props(props) {
             return null;
         },
 
-        set(store, prop, val) {
+        set(_handler, prop, val) {
             let exists = Reflect.has(store, prop) || Reflect.has(calc, prop);
             let prevVal = store[prop];
 
@@ -145,8 +155,7 @@ function Props(props) {
     });
 
     // determine dependencies once initial props have been set
-    store.refresh();
-
+    handler.refresh();
     return context;
 }
 
@@ -171,7 +180,52 @@ function scale(val, min, max, defaultVal, step) {
     return res;
 }
 
-function pseudoTest() {
+let base62 = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+function toBase62(num) {
+    if (!num) {
+        return "0";
+    }
+
+    let res = "";
+    let negative = num < 0;
+    if (negative) {
+        num = Math.abs(num);
+    }
+
+    let decimals = 0;
+    if (num != Math.round(num)) {
+        while (num != Math.round(num) && decimals < 20) {
+            decimals += 1;
+            num = num * 10;
+        }
+    }
+
+    let digits = base62.length;
+    while (num) {
+        res = base62.charAt(num % digits) + res;
+        num = Math.floor(num / digits);
+    }
+
+    return (negative ? "-" : "") + (decimals ? `.${toBase62(decimals)}` : "") + res;
+}
+
+function fromBase62(encoded) {
+    let negative = encoded.charAt(0) == "-";
+    if (negative) {
+        encoded = encoded.slice(1);
+    }
+    let decimals = 0;
+    if (encoded.charAt(0) == ".") {
+        decimals = fromBase62(encoded[1]);
+        encoded = encoded.slice(2);
+    }
+
+    let res = encoded.split("").reduce((total, rixit) => total * base62.length + base62.indexOf(rixit), 0);
+    res = (res * (negative ? -1 : 1)) / Math.pow(10, decimals);
+    return res;
+}
+
+function pseudoTestSetProps() {
     // xxx - move to actual unit tests once i libify the code
     let z = Props({
         a: 3,
@@ -185,6 +239,20 @@ function pseudoTest() {
     });
 
     z.b = 6;
+}
+
+function pseudoTestEncodeNums() {
+    let tests = ["0", "16", "256", "123.456", "0.0000666", "-234234", "-0.123456789", "-0.0000000987654321"];
+    tests.forEach(num => {
+        console.log("----------------------");
+        console.log(num);
+        num = parseFloat(num);
+        console.log("toBase62", toBase62(num));
+        console.log("fromBase62", fromBase62(toBase62(num)).toString());
+        if (num != fromBase62(toBase62(num))) {
+            console.error("Not equals");
+        }
+    });
 }
 
 export {Props, scale};
