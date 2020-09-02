@@ -110,21 +110,19 @@ class LoopKit {
         }
     }
 
-    export(filename, rt) {
-        let renderTexture =
-            rt ||
-            PIXI.RenderTexture.create({
-                width: this.width,
-                height: this.height,
-                resolution: 2,
-            });
+    export(filename, resolution = 2) {
+        let renderTexture = PIXI.RenderTexture.create({
+            width: this.width,
+            height: this.height,
+            resolution,
+        });
         this.app.renderer.render(this.app.stage, renderTexture, false);
 
         let objectURL = this.app.renderer.plugins.extract.base64(renderTexture, "image/png", 1);
 
         let element = document.createElement("a");
         element.setAttribute("href", objectURL);
-        element.setAttribute("download", filename || "capture.png");
+        element.setAttribute("download", filename);
         element.style.display = "none";
         document.body.appendChild(element);
         element.click();
@@ -135,12 +133,6 @@ class LoopKit {
     exportLoop() {
         this.stop();
         this.looper.frameFull = 0;
-        let rt = PIXI.RenderTexture.create({
-            width: this.width,
-            height: this.height,
-            resolution: 4,
-        });
-
         for (let i = 0; i <= this.looper.frames; i++) {
             this._onFrame(false);
             let paddedIdx = ("0000" + i).slice(-4);
@@ -162,7 +154,7 @@ class LoopKit {
             this.stop();
             this.exportLoop();
         } else if (evt.key == "p") {
-            this.export();
+            this.export("capture.png", 2);
         }
     }
 
