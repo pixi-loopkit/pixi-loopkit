@@ -48,13 +48,13 @@ class RadialCluster {
 }
 
 class Circular {
-    constructor({x, y, r, spacing, inflection, rotation}) {
+    constructor({x, y, r, spacing, angle, rotation}) {
         this.x = x;
         this.y = y;
         this.spacing = spacing;
         this.r = r;
         this.rotation = rotation || 0;
-        this.inflection = inflection == undefined ? 360 : inflection; // 0..360
+        this.angle = angle == undefined ? 360 : angle; // 0..360
     }
 
     update(params) {
@@ -65,7 +65,7 @@ class Circular {
 
     position(nodes) {
         // lay out the nodes
-        let angleIncrement = this.inflection / nodes.length;
+        let angleIncrement = this.angle / nodes.length;
 
         let [x, y] = [this.x, this.y];
         let degrees = 0;
@@ -75,10 +75,10 @@ class Circular {
         let r = this.r;
         if (this.r) {
             let lineLength = this.r * Math.PI * 2;
-            distance = (lineLength / nodes.length) * (this.inflection / 360);
+            distance = (lineLength / nodes.length) * (this.angle / 360);
         } else {
             distance = this.spacing;
-            r = (this.spacing * nodes.length) / (Math.PI * 2) / (this.inflection / 360);
+            r = (this.spacing * nodes.length) / (Math.PI * 2); // / (this.angle / 360);
         }
 
         // center before we start going around
