@@ -8,53 +8,79 @@ try {
 }
 
 class LoopKit {
-    constructor({canvas, onFrame, antialias, bgColor, loopSeconds}) {
+    constructor({canvas, onFrame, antialias, bgColor, frames, debugKeystrokes}) {
         canvas = typeof canvas == "string" ? document.querySelector(canvas) : canvas;
         this.canvas = canvas;
         this.width = 0;
         this.height = 0;
-        this.looper = new Loop(loopSeconds || 1);
+        this.loop = new Loop(frames || 60);
+        this.debugKeystrokes = debugKeystrokes == undefined ? true : debugKeystrokes;
 
-        this.app = new PIXI.Application({
+        this.renderer = new PIXI.Renderer({
             view: canvas,
             antialias: antialias !== undefined ? antialias : true,
+            resolution: window.devicePixelRatio,
+            autoDensity: true,
+
+            // want these for generating stills
+            clearBeforeRender: false,
+            preserveDrawingBuffer: true,
         });
 
+        this._root = new PIXI.Container();
+        this.bg = new PIXI.Graphics();
         if (bgColor) {
             this.bgColor = hexColor(bgColor);
-            this.bg = new PIXI.Graphics();
-            this.app.stage.addChild(this.bg);
+            this._root.addChild(this.bg);
         }
-
         this.graphics = new PIXI.Graphics();
-        this.app.stage.addChild(this.graphics);
+        this._root.addChild(this.graphics);
 
-        this.setDimensions = this.setDimensions.bind(this);
+        // bind the callback funcs so they don't lose our context
+        // the behavior can be overridden on the API caller side by using an arrow function
         this.onKeyDown = this.onKeyDown.bind(this);
+        this._onFrame = this._onFrame.bind(this);
+        this._setDimensions = this._setDimensions.bind(this);
+
         this._connectListeners(true);
 
         this._renderPending = null;
 
-        this.setDimensions();
+        this.ticker = PIXI.Ticker.shared;
+        this.ticker.add(this._onFrame);
+        this.ticker.stop();
+        this._setDimensions();
 
-        this.app.ticker.add(this._onFrame.bind(this));
         if (onFrame) {
             this.onFrame = onFrame.bind(this);
-        } else {
-            this.stop();
+            this.ticker.start();
         }
-
-        this.render();
     }
 
     _onFrame(tick) {
         if (!this.onFrame) {
+            // nothing to do if there is no callback
             return;
         }
         if (tick !== false) {
-            this.looper.tick();
+            this.loop.tick();
         }
-        this.onFrame(this.graphics, this.looper.frame);
+        this.onFrame(this.graphics, this.loop.frame);
+        this.renderer.render(this._root);
+    }
+
+    render() {
+        // manual call to render the screen in case we are not looping right now
+        if (this.ticker.started) {
+            // ignore as we are auto-rendering in _onFrame
+            return;
+        }
+
+        window.cancelAnimationFrame(this._renderPending);
+        this._renderPending = window.requestAnimationFrame(() => {
+            this.onFrame(this.graphics, this.loop.frame);
+            this.renderer.render(this._root);
+        });
     }
 
     start() {
@@ -62,27 +88,14 @@ class LoopKit {
             // no point to tick if nobody's listening
             return;
         }
-        this.app.ticker.start();
+        this.ticker.start();
     }
     stop() {
-        this.app.ticker.stop();
+        this.ticker.stop();
     }
     pause(pause) {
-        pause = pause === undefined ? this.app.ticker.started : pause;
+        pause = pause === undefined ? this.ticker.started : pause;
         pause ? this.stop() : this.start();
-    }
-
-    render() {
-        if (this.app.ticker.started) {
-            // ignore as we are rendering anyway
-            return;
-        }
-
-        window.cancelAnimationFrame(this._renderPending);
-        this._renderPending = window.requestAnimationFrame(() => {
-            this._onFrame(false);
-            this.app.render();
-        });
     }
 
     addChild(...child) {
@@ -95,19 +108,28 @@ class LoopKit {
         return this.graphics.children;
     }
 
-    setDimensions(evt) {
+    _setDimensions(evt) {
         let box = this.canvas.parentElement.getBoundingClientRect();
         [this.width, this.height] = [box.width, box.height];
         this.canvas.style.width = this.width;
         this.canvas.style.height = this.height;
-        this.app.renderer.resize(box.width, box.height);
+        this.renderer.resize(box.width, box.height);
 
-        if (this.bg) {
+        if (this.bgColor) {
             this.bg.clear();
             this.bg.beginFill(this.bgColor);
             this.bg.drawRect(0, 0, this.width, this.height);
             this.bg.endFill();
         }
+
+        this.render();
+    }
+
+    splitFrame(parts) {
+        // proxy for easier access - returns current frame split into N even parts
+        // 0..1 of the frame turns into [0..1, 0..1, ...]
+        // e.g. 2 parts for frame 0.6 will return [1, 0.2]  <-- first part done, second 20% in;
+        return this.loop.splitFrame(parts);
     }
 
     export(filename, resolution = 2) {
@@ -116,9 +138,9 @@ class LoopKit {
             height: this.height,
             resolution,
         });
-        this.app.renderer.render(this.app.stage, renderTexture, false);
+        this.renderer.render(this._root, renderTexture, false);
 
-        let objectURL = this.app.renderer.plugins.extract.base64(renderTexture, "image/png", 1);
+        let objectURL = this.renderer.plugins.extract.base64(renderTexture, "image/png", 1);
 
         let element = document.createElement("a");
         element.setAttribute("href", objectURL);
@@ -132,41 +154,78 @@ class LoopKit {
 
     exportLoop() {
         this.stop();
-        this.looper.frameFull = 0;
-        for (let i = 0; i <= this.looper.frames; i++) {
+        this.loop.frameFull = 0;
+        for (let i = 0; i <= this.loop.frames; i++) {
             this._onFrame(false);
             let paddedIdx = ("0000" + i).slice(-4);
             this.export(`frame-${paddedIdx}.png`);
-            this.looper.tick();
+            this.loop.tick();
+        }
+    }
+
+    exportStill(filename, resolution = 2) {
+        // renders all frames on the canvas and then exports the render for a still
+        let renderTexture = PIXI.RenderTexture.create({
+            width: this.width,
+            height: this.height,
+            resolution,
+        });
+
+        this.stop();
+        this.loop.frameFull = 0;
+        for (let i = 0; i <= this.loop.frames; i++) {
+            this._onFrame(false);
+            this.bg.visible = i == 0; // we want our smear, so disable background after first frame
+            this.renderer.render(this._root, renderTexture, false);
+            this.loop.tick();
+        }
+        this.bg.visible = true;
+
+        if (filename) {
+            let objectURL = this.renderer.plugins.extract.base64(renderTexture, "image/png", 1);
+            let element = document.createElement("a");
+            element.setAttribute("href", objectURL);
+            element.setAttribute("download", filename);
+            element.style.display = "none";
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
+            URL.revokeObjectURL(objectURL);
         }
     }
 
     onKeyDown(evt) {
         if (evt.key == " ") {
             this.pause();
-        } else if (evt.key == "ArrowRight") {
-            this.looper.tick(evt.shiftKey ? 1 : evt.ctrlKey ? 60 : 10);
+        } else if (evt.code == "ArrowRight") {
+            this.loop.tick(evt.shiftKey ? 1 : evt.ctrlKey ? 60 : 10);
             this.render();
-        } else if (evt.key == "ArrowLeft") {
-            this.looper.tick(evt.shiftKey ? -1 : evt.ctrlKey ? -60 : -10);
+        } else if (evt.code == "ArrowLeft") {
+            this.loop.tick(evt.shiftKey ? -1 : evt.ctrlKey ? -60 : -10);
             this.render();
-        } else if (evt.key == "e") {
+        } else if (evt.code == "KeyE" && evt.shiftKey && !evt.ctrlKey) {
             this.stop();
             this.exportLoop();
-        } else if (evt.key == "p") {
+        } else if (evt.code == "KeyP" && !evt.shiftKey && !evt.ctrlKey) {
             this.export("capture.png", 2);
+        } else if (evt.code == "KeyR" && !evt.ctrlKey) {
+            let filename = evt.shiftKey ? "still.png" : null;
+            this.exportStill(filename, 2);
         }
     }
 
     _connectListeners(connect) {
         let command = connect ? window.addEventListener : window.removeEventListener;
-        command("resize", this.setDimensions);
-        command("keydown", this.onKeyDown);
+        command("resize", this._setDimensions);
+        if (this.debugKeystrokes) {
+            command("keydown", this.onKeyDown);
+        }
     }
 
     destroy() {
         this._connectListeners(false);
-        this.app.destroy();
+        this.ticker.remove(this._onFrame);
+        this.renderer.destroy();
     }
 }
 
