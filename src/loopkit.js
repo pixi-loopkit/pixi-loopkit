@@ -78,7 +78,9 @@ class LoopKit {
 
         window.cancelAnimationFrame(this._renderPending);
         this._renderPending = window.requestAnimationFrame(() => {
-            this.onFrame(this.graphics, this.loop.frame);
+            if (this.onFrame) {
+                this.onFrame(this.graphics, this.loop.frame);
+            }
             this.renderer.render(this._root);
         });
     }
