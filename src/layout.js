@@ -48,13 +48,14 @@ class RadialCluster {
 }
 
 class Circular {
-    constructor({x, y, r, spacing, angle, rotation}) {
+    constructor({x, y, r, spacing, angle, rotation, rotateNodes}) {
         this.x = x;
         this.y = y;
         this.spacing = spacing;
         this.r = r;
         this.rotation = rotation || 0;
         this.angle = angle == undefined ? 360 : angle; // 0..360
+        this.rotateNodes = rotateNodes;
     }
 
     update(params) {
@@ -68,7 +69,6 @@ class Circular {
         let angleIncrement = this.angle / nodes.length;
 
         let [x, y] = [this.x, this.y];
-        let degrees = 0;
 
         // you can specify either radius or spacing, and we'll figure out the distance from there;
         let distance;
@@ -81,15 +81,22 @@ class Circular {
             r = (this.spacing * nodes.length) / (Math.PI * 2); // / (this.angle / 360);
         }
 
-        // center before we start going around
-        y += r;
-        x += distance / 2;
+        let degrees = this.rotation;
+
+        // center before we start going around; there is bit of voodoo going on here that could use a longer
+        // docstring
+        x = x + Math.sin(rad(degrees)) * r + Math.sin(rad(degrees + 90)) * distance / 2;
+        y = y + Math.cos(rad(degrees)) * r + Math.cos(rad(degrees + 90)) * distance / 2;
+
 
         nodes.forEach((node, idx) => {
             [node.x, node.y] = [x, y];
+            if (this.rotateNodes) {
+                node.rotation = rad(-degrees);
+            }
             degrees = degrees + angleIncrement;
-            x = x - Math.sin(rad(degrees - 90 - this.rotation)) * distance;
-            y = y - Math.cos(rad(degrees - 90 - this.rotation)) * distance;
+            x = x - Math.sin(rad(degrees - 90)) * distance;
+            y = y - Math.cos(rad(degrees - 90)) * distance;
         });
     }
 }
