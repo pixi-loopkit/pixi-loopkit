@@ -8,13 +8,14 @@ try {
 }
 
 class LoopKit {
-    constructor({canvas, onFrame, antialias, bgColor, frames, debugKeystrokes}) {
+    constructor({canvas, onFrame, antialias, bgColor, frames, debugKeystrokes, stillsOpacity}) {
         canvas = typeof canvas == "string" ? document.querySelector(canvas) : canvas;
         this.canvas = canvas;
         this.width = 0;
         this.height = 0;
         this.loop = new Loop(frames || 60);
-        this.debugKeystrokes = debugKeystrokes == undefined ? true : debugKeystrokes;
+        this.debugKeystrokes = debugKeystrokes === undefined ? true : debugKeystrokes;
+        this.stillsOpacity = stillsOpacity || 0.2;
 
         this.renderer = new PIXI.Renderer({
             view: canvas,
@@ -165,22 +166,24 @@ class LoopKit {
         }
     }
 
-    exportStill(filename, resolution = 2) {
+    exportStill(filename) {
         // renders all frames on the canvas and then exports the render for a still
         let renderTexture = PIXI.RenderTexture.create({
             width: this.width,
             height: this.height,
-            resolution,
+            resolution: 2,
         });
 
         this.stop();
         this.loop.frameFull = 0;
+        this.graphics.alpha = this.stillsOpacity;
         for (let i = 0; i <= this.loop.frames; i++) {
             this._onFrame(false);
             this.bg.visible = i == 0; // we want our smear, so disable background after first frame
             this.renderer.render(this._root, renderTexture, false);
             this.loop.tick();
         }
+        this.graphics.alpha = 1;
         this.bg.visible = true;
 
         if (filename) {
@@ -212,7 +215,7 @@ class LoopKit {
             this.export("capture.png", 2);
         } else if (evt.code == "KeyR" && !evt.ctrlKey) {
             let filename = evt.shiftKey ? "still.png" : null;
-            this.exportStill(filename, 2);
+            this.exportStill(filename);
         }
     }
 
