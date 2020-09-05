@@ -158,7 +158,7 @@ class LoopKit {
     exportLoop() {
         this.stop();
         this.loop.frameFull = 0;
-        for (let i = 0; i <= this.loop.frames; i++) {
+        for (let i = 0; i < this.loop.frames - 1; i++) {
             this._onFrame(false);
             let paddedIdx = ("0000" + i).slice(-4);
             this.export(`frame-${paddedIdx}.png`);
