@@ -196,7 +196,7 @@ class LoopKit {
             }
         });
         if (tape) {
-            await _generateTar(tape);
+            await _generateTar(tape, this.loop.frames);
         }
     }
 
@@ -273,18 +273,33 @@ class LoopKit {
     }
 }
 
-async function _generateTar(tape) {
+async function _generateTar(tape, frames) {
     console.log("Zipping...");
     // we will gonna add a few silly bash scripts
-    let bashGenerate =
+    let out = tape.append(
+        "gif.sh",
         "#!/bin/sh\n" +
-        `ffmpeg -framerate 50 -i frames/%04d.png -filter_complex "[0:v] fps=50,split [a][b];[a] palettegen [p];[b][p] paletteuse" loop.gif`;
-    let out = tape.append("generate_gif.sh", bashGenerate, ["mode-755"]);
+            `ffmpeg -framerate 50 -i frames/%04d.png -filter_complex "[0:v] fps=50,split [a][b];[a] palettegen [p];[b][p] paletteuse" loop.gif`,
+        ["mode-755"]
+    );
 
-    let bashGenerateScaled =
+    out = tape.append(
+        "gif_scaled.sh",
         "#!/bin/sh\n" +
-        `ffmpeg -framerate 50 -i frames/%04d.png -filter_complex "[0:v] scale=600:600,fps=50,split [a][b];[a] palettegen [p];[b][p] paletteuse" loop-scaled.gif`;
-    out = tape.append("generate_scaled.sh", bashGenerateScaled, ["mode-755"]);
+            `ffmpeg -framerate 50 -i frames/%04d.png -filter_complex "[0:v] scale=600:600,fps=50,split [a][b];[a] palettegen [p];[b][p] paletteuse" loop-scaled.gif`,
+        ["mode-755"]
+    );
+
+    // we want the video to be approx 30 seconds for slow contemplation
+    let repetitions = Math.round(30 * 60 / frames)
+    out = tape.append(
+        "mp4-30s-loop.sh",
+        "#!/bin/sh\n" +
+            `ffmpeg -framerate 50 -i frames/%04d.png -filter_complex loop=${repetitions}:${frames}:0 -vcodec libx264 -pix_fmt yuv420p -crf 20 loop.mp4`,
+        ["mode-755"]
+    );
+
+
 
     function uint8ToString(buf) {
         let out = "";
@@ -302,7 +317,7 @@ async function _generateTar(tape) {
     element.style.display = "none";
     document.body.appendChild(element);
     element.click();
-    console.log("Done.")
+    console.log("Done.");
 }
 
 export {LoopKit};
