@@ -23,7 +23,7 @@
                 align-items: flex-start;
             }
 
-            .example > div:first-child {
+            .kit {
                 width: 300px;
                 height: 300px;
                 overflow: hidden;
@@ -35,7 +35,7 @@
                 padding: 10px 0;
                 background: none;
                 margin: 0;
-            }</style></head><body class="docs"><main class="loading"><p>Not sure what you are doing here right now, this whole lot is bit of a WIP; Have to figure out what to focus on. Stuff works though!</p><section><h1>Drawing things</h1><section><h2>Draw straight onto the canvas - simple square</h2><div class="example direct-draw"><div><canvas/></div><pre/></div></section><section><h2>Or onto an object, for better control</h2><div class="example as-object"><div><canvas/></div><pre/></div></section></section><section><h1>Looping</h1><p>How frame goes from 0..1 and how looping works</p></section><section><h1>Reactive Props</h1><p>They sorta make most sense when you have a midi board, but maybe they are also useful outside of that. E.g. to centralize code. The `scale` might not be as useful, hmm. Or maybe it is.</p><pre class="lang-javascript">
+            }</style></head><body class="docs"><main class="loading"><p>Not sure what you are doing here right now, this whole lot is bit of a WIP; Have to figure out what to focus on. Stuff works though!</p><section><h1>Drawing things</h1><section><h2>Draw straight onto the canvas - simple square</h2><div class="example direct-draw"><div class="kit"></div><pre></pre></div></section><section><h2>Or onto an object, for better control</h2><div class="example as-object"><div class="kit"></div><pre></pre></div></section></section><section><h1>Looping</h1><p>How frame goes from 0..1 and how looping works</p></section><section><h1>Reactive Props</h1><p>They sorta make most sense when you have a midi board, but maybe they are also useful outside of that. E.g. to centralize code. The `scale` might not be as useful, hmm. Or maybe it is.</p><pre class="lang-javascript">
                     <code>
                         let props = new Props({
                             edges: state => scale(state.c1, 3, 200, 200) + scale(state.c1a, 0, 8),

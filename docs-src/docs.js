@@ -5,7 +5,7 @@ let samples = {
         // import {LoopKit, hexColor} from "pixi-loopkit";
 
         let kit = new LoopKit({
-            canvas: ".direct-draw canvas",
+            container: ".direct-draw .kit",
             bgColor: "#eee",
         });
 
@@ -31,7 +31,7 @@ let samples = {
         let rect = new Thinger(100, 100, 100, 100);
 
         let kit = new LoopKit({
-            canvas: ".as-object canvas",
+            container: ".as-object .kit",
             bgColor: "#eee",
             onFrame: () => {
                 rect.rotation += 0.01;

@@ -8,17 +8,20 @@ try {
 }
 
 class LoopKit {
-    constructor({canvas, onFrame, antialias, bgColor, frames, debugKeystrokes, stillsOpacity}) {
-        canvas = typeof canvas == "string" ? document.querySelector(canvas) : canvas;
-        this.canvas = canvas;
+    constructor({container, onFrame, antialias, bgColor, frames, debugKeystrokes, stillsOpacity}) {
+        container = typeof container == "string" ? document.querySelector(container) : container;
+        this.container = container;
         this.width = 0;
         this.height = 0;
         this.loop = new Loop(frames || 60);
         this.debugKeystrokes = debugKeystrokes === undefined ? true : debugKeystrokes;
         this.stillsOpacity = stillsOpacity || 0.2;
 
+        this.canvas = document.createElement("canvas");
+        this.container.appendChild(this.canvas);
+
         this.renderer = new PIXI.Renderer({
-            view: canvas,
+            view: this.canvas,
             antialias: antialias !== undefined ? antialias : true,
             resolution: window.devicePixelRatio,
             autoDensity: true,
@@ -229,6 +232,8 @@ class LoopKit {
         this._connectListeners(false);
         this.ticker.remove(this._onFrame);
         this.renderer.destroy();
+        this.container.removeChild(this.canvas);
+        this.canvas = null;
     }
 }
 

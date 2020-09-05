@@ -391,7 +391,7 @@ function rad(deg) {
 
 // CONCATENATED MODULE: ./src/loop.js
 class Loop {
-    constructor(frames=120) {
+    constructor(frames = 120) {
         this._frames = frames;
         this.frameFull = 0; // goes from 0 to frames
     }
@@ -429,6 +429,14 @@ class Loop {
         return this.zig(times * 2);
     }
 
+    fullCycle(callback) {
+        // cycles through the full loop and makes sure we are not missing any frames, nor we do have any extra
+        for (let frameFull = 0; frameFull < this.frames; frameFull++) {
+            this.frameFull = frameFull;
+            callback(this.frame, this.frameFull);
+        }
+    }
+
     splitFrame(parts) {
         let res = [];
         for (let part = 0; part < parts; part++) {
@@ -463,16 +471,20 @@ try {
 }
 
 class loopkit_LoopKit {
-    constructor({canvas, onFrame, antialias, bgColor, frames, debugKeystrokes}) {
-        canvas = typeof canvas == "string" ? document.querySelector(canvas) : canvas;
-        this.canvas = canvas;
+    constructor({container, onFrame, antialias, bgColor, frames, debugKeystrokes, stillsOpacity}) {
+        container = typeof container == "string" ? document.querySelector(container) : container;
+        this.container = container;
         this.width = 0;
         this.height = 0;
         this.loop = new Loop(frames || 60);
-        this.debugKeystrokes = debugKeystrokes == undefined ? true : debugKeystrokes;
+        this.debugKeystrokes = debugKeystrokes === undefined ? true : debugKeystrokes;
+        this.stillsOpacity = stillsOpacity || 0.2;
+
+        this.canvas = document.createElement("canvas");
+        this.container.appendChild(this.canvas);
 
         this.renderer = new PIXI.Renderer({
-            view: canvas,
+            view: this.canvas,
             antialias: antialias !== undefined ? antialias : true,
             resolution: window.devicePixelRatio,
             autoDensity: true,
@@ -612,30 +624,30 @@ class loopkit_LoopKit {
     exportLoop() {
         this.stop();
         this.loop.frameFull = 0;
-        for (let i = 0; i <= this.loop.frames; i++) {
+        this.loop.fullCycle((frame, idx) => {
             this._onFrame(false);
-            let paddedIdx = ("0000" + i).slice(-4);
+            let paddedIdx = ("0000" + idx).slice(-4);
             this.export(`frame-${paddedIdx}.png`);
-            this.loop.tick();
-        }
+        });
     }
 
-    exportStill(filename, resolution = 2) {
+    exportStill(filename) {
         // renders all frames on the canvas and then exports the render for a still
         let renderTexture = PIXI.RenderTexture.create({
             width: this.width,
             height: this.height,
-            resolution,
+            resolution: 2,
         });
 
         this.stop();
         this.loop.frameFull = 0;
-        for (let i = 0; i <= this.loop.frames; i++) {
+        this.graphics.alpha = this.stillsOpacity;
+        this.loop.fullCycle((frame, idx) => {
             this._onFrame(false);
-            this.bg.visible = i == 0; // we want our smear, so disable background after first frame
+            this.bg.visible = idx == 0; // we want our smear, so disable background after first frame
             this.renderer.render(this._root, renderTexture, false);
-            this.loop.tick();
-        }
+        });
+        this.graphics.alpha = 1;
         this.bg.visible = true;
 
         if (filename) {
@@ -667,7 +679,7 @@ class loopkit_LoopKit {
             this.export("capture.png", 2);
         } else if (evt.code == "KeyR" && !evt.ctrlKey) {
             let filename = evt.shiftKey ? "still.png" : null;
-            this.exportStill(filename, 2);
+            this.exportStill(filename);
         }
     }
 
@@ -683,6 +695,8 @@ class loopkit_LoopKit {
         this._connectListeners(false);
         this.ticker.remove(this._onFrame);
         this.renderer.destroy();
+        this.container.removeChild(this.canvas);
+        this.canvas = null;
     }
 }
 
@@ -995,7 +1009,7 @@ let samples = {
         // import {LoopKit, hexColor} from "pixi-loopkit";
 
         let kit = new _src__WEBPACK_IMPORTED_MODULE_0__["LoopKit"]({
-            canvas: ".direct-draw canvas",
+            container: ".direct-draw .kit",
             bgColor: "#eee",
         });
 
@@ -1021,7 +1035,7 @@ let samples = {
         let rect = new Thinger(100, 100, 100, 100);
 
         let kit = new _src__WEBPACK_IMPORTED_MODULE_0__["LoopKit"]({
-            canvas: ".as-object canvas",
+            container: ".as-object .kit",
             bgColor: "#eee",
             onFrame: () => {
                 rect.rotation += 0.01;
