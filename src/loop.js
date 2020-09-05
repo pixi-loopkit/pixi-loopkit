@@ -1,5 +1,5 @@
 class Loop {
-    constructor(frames=120) {
+    constructor(frames = 120) {
         this._frames = frames;
         this.frameFull = 0; // goes from 0 to frames
     }
@@ -35,6 +35,14 @@ class Loop {
     zigzag(times = 1) {
         // zig and zag back, which means you always end back to where you started 0->1->0. equals to zig(2)
         return this.zig(times * 2);
+    }
+
+    fullCycle(callback) {
+        // cycles through the full loop and makes sure we are not missing any frames, nor we do have any extra
+        for (let frameFull = 0; frameFull < this.frames; frameFull++) {
+            this.frameFull = frameFull;
+            callback(this.frame, this.frameFull);
+        }
     }
 
     splitFrame(parts) {

@@ -158,12 +158,11 @@ class LoopKit {
     exportLoop() {
         this.stop();
         this.loop.frameFull = 0;
-        for (let i = 0; i < this.loop.frames - 1; i++) {
+        this.loop.fullCycle((frame, idx) => {
             this._onFrame(false);
-            let paddedIdx = ("0000" + i).slice(-4);
+            let paddedIdx = ("0000" + idx).slice(-4);
             this.export(`frame-${paddedIdx}.png`);
-            this.loop.tick();
-        }
+        });
     }
 
     exportStill(filename) {
@@ -177,12 +176,11 @@ class LoopKit {
         this.stop();
         this.loop.frameFull = 0;
         this.graphics.alpha = this.stillsOpacity;
-        for (let i = 0; i <= this.loop.frames; i++) {
+        this.loop.fullCycle((frame, idx) => {
             this._onFrame(false);
-            this.bg.visible = i == 0; // we want our smear, so disable background after first frame
+            this.bg.visible = idx == 0; // we want our smear, so disable background after first frame
             this.renderer.render(this._root, renderTexture, false);
-            this.loop.tick();
-        }
+        });
         this.graphics.alpha = 1;
         this.bg.visible = true;
 
