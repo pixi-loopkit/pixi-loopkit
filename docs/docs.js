@@ -1469,8 +1469,7 @@ let samples = {
     "direct-draw": function () {
         // import {LoopKit, hexColor} from "pixi-loopkit";
 
-        let kit = new _src__WEBPACK_IMPORTED_MODULE_0__["LoopKit"]({
-            container: ".direct-draw .kit",
+        let kit = new _src__WEBPACK_IMPORTED_MODULE_0__["LoopKit"](".direct-draw .kit", {
             bgColor: "#eee",
         });
 
@@ -1495,8 +1494,7 @@ let samples = {
 
         let rect = new Thinger(100, 100, 100, 100);
 
-        let kit = new _src__WEBPACK_IMPORTED_MODULE_0__["LoopKit"]({
-            container: ".as-object .kit",
+        let kit = new _src__WEBPACK_IMPORTED_MODULE_0__["LoopKit"](".as-object .kit", {
             bgColor: "#eee",
             onFrame: () => {
                 rect.rotation += 0.01;
@@ -1517,7 +1515,7 @@ Object.entries(samples).forEach(([key, func]) => {
 });
 
 // strip extranneous whitespace
-document.querySelectorAll("code").forEach((elem) => {
+document.querySelectorAll("code").forEach(elem => {
     let source = elem.innerHTML;
     source = source.replace(/Object\(_src__WEBPACK_IMPORTED_MODULE_.*\["(.*)"\]\)/g, "$1");
     source = source.replace(/_src__WEBPACK_IMPORTED_MODULE_.*\["(.*)"\]/g, "$1");
@@ -1529,7 +1527,7 @@ document.querySelectorAll("code").forEach((elem) => {
 document.querySelector(".loading").classList.remove("loading");
 
 // run the renders
-Object.values(samples).forEach((func) => func());
+Object.values(samples).forEach(func => func());
 
 
 /***/ })
