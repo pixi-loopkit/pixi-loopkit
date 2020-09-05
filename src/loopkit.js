@@ -8,7 +8,7 @@ try {
 }
 
 class LoopKit {
-    constructor({container, onFrame, antialias, bgColor, frames, debugKeystrokes, stillsOpacity}) {
+    constructor(container, {onFrame, antialias, bgColor, frames, debugKeystrokes, stillsOpacity}) {
         container = typeof container == "string" ? document.querySelector(container) : container;
         this.container = container;
         this.width = 0;
@@ -291,15 +291,13 @@ async function _generateTar(tape, frames) {
     );
 
     // we want the video to be approx 30 seconds for slow contemplation
-    let repetitions = Math.round(30 * 60 / frames)
+    let repetitions = Math.round((30 * 60) / frames);
     out = tape.append(
         "mp4-30s-loop.sh",
         "#!/bin/sh\n" +
             `ffmpeg -framerate 50 -i frames/%04d.png -filter_complex loop=${repetitions}:${frames}:0 -vcodec libx264 -pix_fmt yuv420p -crf 20 loop.mp4`,
         ["mode-755"]
     );
-
-
 
     function uint8ToString(buf) {
         let out = "";
