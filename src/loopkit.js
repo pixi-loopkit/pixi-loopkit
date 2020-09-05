@@ -147,25 +147,57 @@ class LoopKit {
         this.renderer.render(this._root, renderTexture, false);
 
         let objectURL = this.renderer.plugins.extract.base64(renderTexture, "image/png", 1);
-
-        let element = document.createElement("a");
-        element.setAttribute("href", objectURL);
-        element.setAttribute("download", filename);
-        element.style.display = "none";
-        document.body.appendChild(element);
-        element.click();
-        document.body.removeChild(element);
-        URL.revokeObjectURL(objectURL);
+        if (filename) {
+            let element = document.createElement("a");
+            element.setAttribute("href", objectURL);
+            element.setAttribute("download", filename);
+            element.style.display = "none";
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
+            window.URL.revokeObjectURL(objectURL);
+        } else {
+            return objectURL;
+        }
     }
 
-    exportLoop() {
+    async exportLoop() {
         this.stop();
-        this.loop.frameFull = 0;
-        this.loop.fullCycle((frame, idx) => {
+        let tape;
+        try {
+            let Tar = require("tar-js");
+            tape = new Tar();
+        } catch (e) {
+            console.warn(
+                "Couldn't import tar-js and will export PNGs one-by one." +
+                    "If you miss a frame after export, simply re-export till you have all the frames"
+            );
+        }
+
+        function stringToUint8(input) {
+            let out = new Uint8Array(input.length);
+            for (let i = 0; i < input.length; i++) {
+                out[i] = input.charCodeAt(i);
+            }
+            return out;
+        }
+
+        await this.loop.fullCycle(async (_frame, idx) => {
             this._onFrame(false);
             let paddedIdx = ("0000" + idx).slice(-4);
-            this.export(`frame-${paddedIdx}.png`);
+            let filename = `frames/${paddedIdx}.png`;
+            if (tape) {
+                console.log("Adding", filename);
+                let data = this.export().slice("data:image/png;base64,".length);
+                data = stringToUint8(atob(data));
+                await tape.append(filename, data);
+            } else {
+                this.export(filename);
+            }
         });
+        if (tape) {
+            await _generateTar(tape);
+        }
     }
 
     exportStill(filename) {
@@ -179,7 +211,7 @@ class LoopKit {
         this.stop();
         this.loop.frameFull = 0;
         this.graphics.alpha = this.stillsOpacity;
-        this.loop.fullCycle((frame, idx) => {
+        this.loop.fullCycle((_frame, idx) => {
             this._onFrame(false);
             this.bg.visible = idx == 0; // we want our smear, so disable background after first frame
             this.renderer.render(this._root, renderTexture, false);
@@ -239,6 +271,38 @@ class LoopKit {
         this.ticker = null;
         this.container = null;
     }
+}
+
+async function _generateTar(tape) {
+    console.log("Zipping...");
+    // we will gonna add a few silly bash scripts
+    let bashGenerate =
+        "#!/bin/sh\n" +
+        `ffmpeg -framerate 50 -i frames/%04d.png -filter_complex "[0:v] fps=50,split [a][b];[a] palettegen [p];[b][p] paletteuse" loop.gif`;
+    let out = tape.append("generate_gif.sh", bashGenerate, ["mode-755"]);
+
+    let bashGenerateScaled =
+        "#!/bin/sh\n" +
+        `ffmpeg -framerate 50 -i frames/%04d.png -filter_complex "[0:v] scale=600:600,fps=50,split [a][b];[a] palettegen [p];[b][p] paletteuse" loop-scaled.gif`;
+    out = tape.append("generate_scaled.sh", bashGenerateScaled, ["mode-755"]);
+
+    function uint8ToString(buf) {
+        let out = "";
+        for (let i = 0; i < buf.length; i++) {
+            out += String.fromCharCode(buf[i]);
+        }
+        return out;
+    }
+    let base64 = btoa(uint8ToString(out));
+
+    let url = "data:application/tar;base64," + base64;
+    let element = document.createElement("a");
+    element.setAttribute("href", url);
+    element.setAttribute("download", "loop.tar");
+    element.style.display = "none";
+    document.body.appendChild(element);
+    element.click();
+    console.log("Done.")
 }
 
 export {LoopKit};
