@@ -233,7 +233,11 @@ class LoopKit {
         this.ticker.remove(this._onFrame);
         this.renderer.destroy();
         this.container.removeChild(this.canvas);
+
+        // remove any pointers
         this.canvas = null;
+        this.ticker = null;
+        this.container = null;
     }
 }
 
