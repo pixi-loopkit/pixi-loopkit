@@ -8,7 +8,7 @@ try {
 }
 
 class LoopKit {
-    constructor(container, {onFrame, antialias, bgColor, frames, debugKeystrokes, stillsOpacity}) {
+    constructor(container, {onFrame, antialias, bgColor, frames, debugKeystrokes, stillsOpacity, bpm, beatsPerLoop}) {
         container = typeof container == "string" ? document.querySelector(container) : container;
         this.container = container;
         this.width = 0;
@@ -19,6 +19,9 @@ class LoopKit {
 
         this.canvas = document.createElement("canvas");
         this.container.appendChild(this.canvas);
+
+        this.bpm = bpm;
+        this.beatsPerLoop = beatsPerLoop || 1;
 
         this.renderer = new PIXI.Renderer({
             view: this.canvas,
@@ -55,22 +58,68 @@ class LoopKit {
         this.ticker.stop();
         this._setDimensions();
 
+        this._fpsTs = [];
+        this._ticks = 0;
+        this._fps = 0;
+
         if (onFrame) {
             this.onFrame = onFrame.bind(this);
             this.ticker.start();
         }
+
+        this._beat = 0;
+        this._beatTs = Date.now();
     }
 
-    _onFrame(tick) {
+    _onFrame(tick = true) {
         if (!this.onFrame) {
             // nothing to do if there is no callback
             return;
         }
-        if (tick !== false) {
-            this.loop.tick();
+
+        if (tick) {
+            if (this.bpm) {
+                this._beatTs = this._beatTs || Date.now();
+                let time = Date.now();
+                let delta = (time - this._beatTs) / 1000;
+                this._beat = ((delta * (this.bpm / 60)) / this.beatsPerLoop) % 1;
+            } else {
+                this.loop.tick();
+            }
+
+            this._ticks += 1;
+            if (this._ticks == 6) {
+                // capture fps every 10 frames
+                this._ticks = 0;
+                this._fpsTs.push(Date.now());
+                this._fpsTs = this._fpsTs.slice(-3);
+                if (this._fpsTs.length == 3) {
+                    // the 3 - 1 is because we have n timestamps, but n-1 timespans
+                    let msPerFrame = (this._fpsTs[2] - this._fpsTs[0]) / 6 / (3 - 1);
+                    this._fps = Math.round(1000 / msPerFrame);
+                }
+            }
         }
-        this.onFrame(this.graphics, this.loop.frame);
+
+        let frame = tick && this.bpm ? this._beat : this.loop.frame;
+        this.onFrame(this.graphics, frame);
         this.renderer.render(this._root);
+    }
+
+    get frame() {
+        return this.bpm ? this._beat : this.loop.frame;
+    }
+
+    set frame(frame) {
+        if (this.bpm) {
+            this._beat = frame;
+            this._beatTs = new Date(Date.now() - ((frame * 1000) / (this.bpm / 60)) * this.beatsPerLoop);
+        }
+        this.loop.frame = frame;
+    }
+
+    get fps() {
+        return this._fps;
     }
 
     render() {
@@ -182,7 +231,7 @@ class LoopKit {
             return out;
         }
 
-        await this.loop.fullCycle(async (_frame, idx) => {
+        await this.loop.fullCircle(async (_frame, idx) => {
             this._onFrame(false);
             let paddedIdx = ("0000" + idx).slice(-4);
             let filename = `frames/${paddedIdx}.png`;
@@ -211,9 +260,10 @@ class LoopKit {
         this.stop();
         this.loop.frameFull = 0;
         this.graphics.alpha = this.stillsOpacity;
-        this.loop.fullCycle((_frame, idx) => {
-            this._onFrame(false);
+        this.loop.fullCircle((_frame, idx) => {
             this.bg.visible = idx == 0; // we want our smear, so disable background after first frame
+            this._onFrame(false);
+            console.log("rendering", _frame, idx);
             this.renderer.render(this._root, renderTexture, false);
         });
         this.graphics.alpha = 1;
