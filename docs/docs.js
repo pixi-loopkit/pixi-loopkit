@@ -212,6 +212,7 @@ __webpack_require__.d(__webpack_exports__, "LoopKit", function() { return /* ree
 __webpack_require__.d(__webpack_exports__, "Props", function() { return /* reexport */ Props; });
 __webpack_require__.d(__webpack_exports__, "Circular", function() { return /* reexport */ Circular; });
 __webpack_require__.d(__webpack_exports__, "RadialCluster", function() { return /* reexport */ RadialCluster; });
+__webpack_require__.d(__webpack_exports__, "RC", function() { return /* reexport */ RC; });
 __webpack_require__.d(__webpack_exports__, "scale", function() { return /* reexport */ scale; });
 __webpack_require__.d(__webpack_exports__, "hexColor", function() { return /* binding */ hexColor; });
 
@@ -543,7 +544,6 @@ class loopkit_LoopKit {
             this.ticker.start();
         }
 
-        this._beat = 0;
         this._beatTs = Date.now();
     }
 
@@ -558,7 +558,13 @@ class loopkit_LoopKit {
                 this._beatTs = this._beatTs || Date.now();
                 let time = Date.now();
                 let delta = (time - this._beatTs) / 1000;
-                this._beat = ((delta * (this.bpm / 60)) / this.beatsPerLoop) % 1;
+                // instead of ticking, we tell loop which frame we're on as it's we use loop's frame merely so we don't carry around
+                let next = ((delta * (this.bpm / 60)) / this.beatsPerLoop) % 1;
+                if (next < this.frame) {
+                    // full loop
+                    this.loop.loops +=1;
+                }
+                this.loop.frame =  next;
             } else {
                 this.loop.tick();
             }
@@ -577,21 +583,42 @@ class loopkit_LoopKit {
             }
         }
 
-        let frame = tick && this.bpm ? this._beat : this.loop.frame;
-        this.onFrame(this.graphics, frame);
+        this.onFrame(this.graphics, this.loop.frame);
         this.renderer.render(this._root);
     }
 
     get frame() {
-        return this.bpm ? this._beat : this.loop.frame;
+        return this.loop.frame;
     }
 
     set frame(frame) {
         if (this.bpm) {
-            this._beat = frame;
+            // rewinding time the according amount
             this._beatTs = new Date(Date.now() - ((frame * 1000) / (this.bpm / 60)) * this.beatsPerLoop);
         }
         this.loop.frame = frame;
+    }
+
+    get bpm() {
+        return this._bpm;
+    }
+
+    get beatsPerLoop() {
+        return this._beatsPerLoop;
+    }
+
+    set bpm(bpm) {
+        let now = Date.now();
+        let ms = now - this._beatTs;
+        this._beatTs = new Date(now - (ms * this._bpm) / bpm);
+        this._bpm = bpm;
+    }
+
+    set beatsPerLoop(beats) {
+        let now = Date.now();
+        let ms = now - this._beatTs;
+        this._beatTs = new Date(now - (ms / this._beatsPerLoop) * beats);
+        this._beatsPerLoop = beats;
     }
 
     get fps() {
@@ -1106,11 +1133,67 @@ function pseudoTestEncodeNums() {
 
 
 
+// CONCATENATED MODULE: ./src/rc.js
+class RC {
+    constructor() {
+        this.channel = null;
+        this._onMessage = this._onMessage.bind(this);
+        this._watchers = [];
+    }
+
+    connect() {
+        if (!this.channel) {
+            // setting channel name to contain path so that we don't go broadcasting accross all pages
+            // on the domain
+            this.channel = new BroadcastChannel(`loopkit-${document.location.pathname}`);
+            this.channel.onmessage = this._onMessage;
+        }
+    }
+
+    send(data) {
+        if (!this.channel) {
+            this.connect();
+        }
+        data = typeof data == "string" ? data : JSON.stringify(data);
+        this.channel.postMessage(data);
+    }
+
+    disconnect() {
+        this.channel.close();
+        this.channel = null;
+    }
+
+    addWatcher(func) {
+        this._watchers.push(func);
+    }
+
+    removeWatcher(func) {
+        this._watchers.splice(this._watchers.indexOf(func), 1);
+    }
+
+    _onMessage(event) {
+        let data = event.data;
+        try {
+            data = JSON.parse(data);
+        } catch (e) {
+            // not a json, we don't judge
+        }
+
+        this._watchers.forEach(func => {
+            func(data);
+        });
+    }
+}
+
+
+
 // EXTERNAL MODULE: external "chroma"
 var external_chroma_ = __webpack_require__(3);
 var external_chroma_default = /*#__PURE__*/__webpack_require__.n(external_chroma_);
 
 // CONCATENATED MODULE: ./src/index.js
+
+
 
 
 
