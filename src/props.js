@@ -77,7 +77,7 @@ function Props(props) {
         },
 
         _dependencies: () => dependants,
-        derivedProps: () => Object.fromEntries(Object.keys(calc).map(key => [key, store[key]])),
+        derived: () => Object.fromEntries(Object.keys(calc).map(key => [key, store[key]])),
 
         toUrlParams: () => Object.fromEntries(Object.entries(store).map(([key, val]) => [key, toBase62(val)])),
         fromUrlParams: () => Object.fromEntries(Object.entries(store).map(([key, val]) => [key, fromBase62(val)])),
