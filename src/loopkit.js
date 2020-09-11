@@ -85,9 +85,9 @@ class LoopKit {
                 let next = ((delta * (this.bpm / 60)) / this.beatsPerLoop) % 1;
                 if (next < this.frame) {
                     // full loop
-                    this.loop.loops +=1;
+                    this.loop.loops += 1;
                 }
-                this.loop.frame =  next;
+                this.loop.frame = next;
             } else {
                 this.loop.tick();
             }
@@ -355,14 +355,14 @@ async function _generateTar(tape, frames) {
     let out = tape.append(
         "gif.sh",
         "#!/bin/sh\n" +
-            `ffmpeg -framerate 50 -i frames/%04d.png -filter_complex "[0:v] fps=50,split [a][b];[a] palettegen [p];[b][p] paletteuse" loop.gif`,
+            `ffmpeg -y -framerate 50 -i frames/%04d.png -filter_complex "[0:v] fps=50,split [a][b];[a] palettegen [p];[b][p] paletteuse" loop.gif`,
         ["mode-755"]
     );
 
     out = tape.append(
         "gif_scaled.sh",
         "#!/bin/sh\n" +
-            `ffmpeg -framerate 50 -i frames/%04d.png -filter_complex "[0:v] scale=600:600,fps=50,split [a][b];[a] palettegen [p];[b][p] paletteuse" loop-scaled.gif`,
+            `ffmpeg -y -framerate 50 -i frames/%04d.png -filter_complex "[0:v] scale=600:600,fps=50,split [a][b];[a] palettegen [p];[b][p] paletteuse" loop-scaled.gif`,
         ["mode-755"]
     );
 
@@ -371,7 +371,7 @@ async function _generateTar(tape, frames) {
     out = tape.append(
         "mp4-30s-loop.sh",
         "#!/bin/sh\n" +
-            `ffmpeg -framerate 50 -i frames/%04d.png -filter_complex loop=${repetitions}:${frames}:0 -vcodec libx264 -pix_fmt yuv420p -crf 20 loop.mp4`,
+            `ffmpeg -y -framerate 50 -i frames/%04d.png -filter_complex loop=${repetitions}:${frames}:0 -vcodec libx264 -pix_fmt yuv420p -crf 20 loop.mp4`,
         ["mode-755"]
     );
 
