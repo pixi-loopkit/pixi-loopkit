@@ -1,5 +1,5 @@
 function Props(props) {
-    let store = {}
+    let store = {};
     let calc = {};
 
     let dependants = {};
@@ -29,9 +29,12 @@ function Props(props) {
             watchers.splice(watchers.indexOf(func), 1);
         },
 
+        getState: () => {
+            return {...store};
+        },
         loadState(values) {
-            // loads given state
-            // prior to that figures out the exact update order so that any interdependent variables don't clash with each other
+            // loads given state, but prior to that figures out the exact update order so that any interdependent
+            // variables don't clash with each other
             let keys = Object.keys(values);
             let deps = {};
             Object.entries(dependants).forEach(([key, keyDependants]) => {
@@ -47,8 +50,10 @@ function Props(props) {
             // determine if we have any inter-dependencies and set the ones that have none before the ones that do
             function moveAvailable() {
                 attempts += 1;
-                if (attempts > 6) {
-                    throw new Error("State seems to have circular dependencies; bailing");
+                if (attempts > 100) {
+                    throw new Error(
+                        `State seems to have circular dependencies; bailing. Unresolved props: ${JSON.stringify(keys)}`
+                    );
                 }
 
                 keys.forEach(key => {
