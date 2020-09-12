@@ -214,6 +214,7 @@ __webpack_require__.d(__webpack_exports__, "Circular", function() { return /* re
 __webpack_require__.d(__webpack_exports__, "RadialCluster", function() { return /* reexport */ RadialCluster; });
 __webpack_require__.d(__webpack_exports__, "RC", function() { return /* reexport */ RC; });
 __webpack_require__.d(__webpack_exports__, "scale", function() { return /* reexport */ scale; });
+__webpack_require__.d(__webpack_exports__, "Sound", function() { return /* reexport */ Sound; });
 __webpack_require__.d(__webpack_exports__, "hexColor", function() { return /* binding */ hexColor; });
 
 // EXTERNAL MODULE: ./node_modules/bezier-easing/src/index.js
@@ -562,9 +563,9 @@ class loopkit_LoopKit {
                 let next = ((delta * (this.bpm / 60)) / this.beatsPerLoop) % 1;
                 if (next < this.frame) {
                     // full loop
-                    this.loop.loops +=1;
+                    this.loop.loops += 1;
                 }
-                this.loop.frame =  next;
+                this.loop.frame = next;
             } else {
                 this.loop.tick();
             }
@@ -659,8 +660,8 @@ class loopkit_LoopKit {
     addChild(...child) {
         this.graphics.addChild(...child);
     }
-    removeChild(child) {
-        this.graphics.removeChild(child);
+    removeChild(...child) {
+        this.graphics.removeChild(...child);
     }
     children() {
         return this.graphics.children;
@@ -832,14 +833,14 @@ async function _generateTar(tape, frames) {
     let out = tape.append(
         "gif.sh",
         "#!/bin/sh\n" +
-            `ffmpeg -framerate 50 -i frames/%04d.png -filter_complex "[0:v] fps=50,split [a][b];[a] palettegen [p];[b][p] paletteuse" loop.gif`,
+            `ffmpeg -y -framerate 50 -i frames/%04d.png -filter_complex "[0:v] fps=50,split [a][b];[a] palettegen [p];[b][p] paletteuse" loop.gif`,
         ["mode-755"]
     );
 
     out = tape.append(
         "gif_scaled.sh",
         "#!/bin/sh\n" +
-            `ffmpeg -framerate 50 -i frames/%04d.png -filter_complex "[0:v] scale=600:600,fps=50,split [a][b];[a] palettegen [p];[b][p] paletteuse" loop-scaled.gif`,
+            `ffmpeg -y -framerate 50 -i frames/%04d.png -filter_complex "[0:v] scale=600:600,fps=50,split [a][b];[a] palettegen [p];[b][p] paletteuse" loop-scaled.gif`,
         ["mode-755"]
     );
 
@@ -848,7 +849,7 @@ async function _generateTar(tape, frames) {
     out = tape.append(
         "mp4-30s-loop.sh",
         "#!/bin/sh\n" +
-            `ffmpeg -framerate 50 -i frames/%04d.png -filter_complex loop=${repetitions}:${frames}:0 -vcodec libx264 -pix_fmt yuv420p -crf 20 loop.mp4`,
+            `ffmpeg -y -framerate 50 -i frames/%04d.png -filter_complex loop=${repetitions}:${frames}:0 -vcodec libx264 -pix_fmt yuv420p -crf 20 loop.mp4`,
         ["mode-755"]
     );
 
@@ -875,7 +876,7 @@ async function _generateTar(tape, frames) {
 
 // CONCATENATED MODULE: ./src/props.js
 function Props(props) {
-    let store = {}
+    let store = {};
     let calc = {};
 
     let dependants = {};
@@ -905,9 +906,12 @@ function Props(props) {
             watchers.splice(watchers.indexOf(func), 1);
         },
 
+        getState: () => {
+            return {...store};
+        },
         loadState(values) {
-            // loads given state
-            // prior to that figures out the exact update order so that any interdependent variables don't clash with each other
+            // loads given state, but prior to that figures out the exact update order so that any interdependent
+            // variables don't clash with each other
             let keys = Object.keys(values);
             let deps = {};
             Object.entries(dependants).forEach(([key, keyDependants]) => {
@@ -923,8 +927,10 @@ function Props(props) {
             // determine if we have any inter-dependencies and set the ones that have none before the ones that do
             function moveAvailable() {
                 attempts += 1;
-                if (attempts > 6) {
-                    throw new Error("State seems to have circular dependencies; bailing");
+                if (attempts > 100) {
+                    throw new Error(
+                        `State seems to have circular dependencies; bailing. Unresolved props: ${JSON.stringify(keys)}`
+                    );
                 }
 
                 keys.forEach(key => {
@@ -1187,11 +1193,74 @@ class RC {
 
 
 
+// CONCATENATED MODULE: ./src/sound.js
+class Sound {
+    constructor({sineSamples, freqSamples}) {
+        console.log("i'm being recreated");
+        this.frequencyMonitor = null;
+        this.sineMonitor = null;
+        this.connected = false;
+
+        // goes betwwen 2^5 and 2^15 and essentially means how much time data you get
+        // for sine that's how long the sample is (at the cost of detail)
+        // for freq it's how granular the frequencies you get. e.g. if it's just "is there noise", can set to the lowest
+        this.sineSamples = sineSamples || Math.pow(2, 10);
+        this.freqSamples = freqSamples || Math.pow(2, 10);
+    }
+
+    async connect() {
+        let stream = await navigator.mediaDevices.getUserMedia({audio: true});
+        let ctx = new AudioContext();
+
+        this.frequencyMonitor = new AnalyserNode(ctx, {
+            minDecibels: -80,
+            maxDecibels: -10,
+            smoothingTimeConstant: 0.8,
+            fftSize: this.freqSamples,
+        });
+        this._frequencyBuffer = new Uint8Array(this.frequencyMonitor.frequencyBinCount);
+
+        this.sineMonitor = new AnalyserNode(ctx, {
+            minDecibels: -80,
+            maxDecibels: -10,
+            smoothingTimeConstant: 0.8,
+            fftSize: this.sineSamples,
+        });
+        this._sineBuffer = new Uint8Array(this.sineMonitor.fftSize);
+
+        let source = ctx.createMediaStreamSource(stream);
+        source.connect(this.frequencyMonitor);
+        source.connect(this.sineMonitor);
+
+        this.connected = true;
+    }
+
+    get frequencies() {
+        // goes from 0..1 but realistically to ~0.8
+        this.frequencyMonitor.getByteFrequencyData(this._frequencyBuffer);
+        return [...this._frequencyBuffer].map(val => val / 256.0);
+    }
+
+    get sine() {
+        // goes from -1..1 because sine wave
+        this.sineMonitor.getByteTimeDomainData(this._sineBuffer);
+        return [...this._sineBuffer].map(val => (128 - val) / 128.0);
+    }
+
+    get volume() {
+        return Math.max(...this.frequencies);
+    }
+}
+
+
+
 // EXTERNAL MODULE: external "chroma"
 var external_chroma_ = __webpack_require__(3);
 var external_chroma_default = /*#__PURE__*/__webpack_require__.n(external_chroma_);
 
 // CONCATENATED MODULE: ./src/index.js
+
+
 
 
 
