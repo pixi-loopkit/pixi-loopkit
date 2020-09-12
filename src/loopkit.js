@@ -182,8 +182,8 @@ class LoopKit {
     addChild(...child) {
         this.graphics.addChild(...child);
     }
-    removeChild(child) {
-        this.graphics.removeChild(child);
+    removeChild(...child) {
+        this.graphics.removeChild(...child);
     }
     children() {
         return this.graphics.children;
