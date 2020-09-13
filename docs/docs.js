@@ -691,15 +691,8 @@ class loopkit_LoopKit {
         return this.loop.splitFrame(parts);
     }
 
-    export(filename, resolution = 2) {
-        let renderTexture = PIXI.RenderTexture.create({
-            width: this.width,
-            height: this.height,
-            resolution,
-        });
-        this.renderer.render(this._root, renderTexture, false);
-
-        let objectURL = this.renderer.plugins.extract.base64(renderTexture, "image/png", 1);
+    export(filename) {
+        let objectURL = this.canvas.toDataURL();
         if (filename) {
             let element = document.createElement("a");
             element.setAttribute("href", objectURL);
@@ -819,6 +812,10 @@ class loopkit_LoopKit {
         this.ticker.remove(this._onFrame);
         this.renderer.destroy();
         this.container.removeChild(this.canvas);
+
+        // let's see if we can actually lose the context
+        let gl = this.canvas.getContext("webgl2") || this.canvas.getContext("webgl");
+        gl.getExtension("WEBGL_lose_context").loseContext();
 
         // remove any pointers
         this.canvas = null;
