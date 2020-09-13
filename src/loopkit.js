@@ -8,7 +8,10 @@ try {
 }
 
 class LoopKit {
-    constructor(container, {onFrame, antialias, bgColor, frames, debugKeystrokes, stillsOpacity, bpm, beatsPerLoop}) {
+    constructor(
+        container,
+        {onFrame, antialias, bgColor, frames, debugKeystrokes, stillsOpacity, bpm, beatsPerLoop, name}
+    ) {
         container = typeof container == "string" ? document.querySelector(container) : container;
         this.container = container;
         this.width = 0;
@@ -22,6 +25,9 @@ class LoopKit {
 
         this.bpm = bpm;
         this.beatsPerLoop = beatsPerLoop || 1;
+
+        // solely for exports but who knows, maybe we'll find a higher purpose later
+        this.name = name;
 
         this.renderer = new PIXI.Renderer({
             view: this.canvas,
@@ -264,7 +270,7 @@ class LoopKit {
             }
         });
         if (tape) {
-            await _generateTar(tape, this.loop.frames);
+            await _generateTar(tape, this.loop.frames, this.name);
         }
     }
 
@@ -302,6 +308,7 @@ class LoopKit {
     }
 
     onKeyDown(evt) {
+        let prefix = this.name ? `${this.name} - ` : "";
         if (evt.key == " ") {
             this.pause();
         } else if (evt.code == "ArrowRight") {
@@ -314,9 +321,9 @@ class LoopKit {
             this.stop();
             this.exportLoop();
         } else if (evt.code == "KeyP" && !evt.shiftKey && !evt.ctrlKey) {
-            this.export("capture.png", 2);
+            this.export(`${prefix}capture.png`, 2);
         } else if (evt.code == "KeyR" && !evt.ctrlKey) {
-            let filename = evt.shiftKey ? "still.png" : null;
+            let filename = evt.shiftKey ? `${prefix}still.png` : null;
             this.exportStill(filename);
         }
     }
@@ -346,20 +353,22 @@ class LoopKit {
     }
 }
 
-async function _generateTar(tape, frames) {
+async function _generateTar(tape, frames, name) {
     console.log("Zipping...");
+    name = name || "loop";
+
     // we will gonna add a few silly bash scripts
     let out = tape.append(
         "gif.sh",
         "#!/bin/sh\n" +
-            `ffmpeg -y -framerate 50 -i frames/%04d.png -filter_complex "[0:v] fps=50,split [a][b];[a] palettegen [p];[b][p] paletteuse" loop.gif`,
+            `ffmpeg -y -framerate 50 -i frames/%04d.png -filter_complex "[0:v] fps=50,split [a][b];[a] palettegen [p];[b][p] paletteuse" ${name}.gif`,
         ["mode-755"]
     );
 
     out = tape.append(
-        "gif_scaled.sh",
+        "gif-scaled.sh",
         "#!/bin/sh\n" +
-            `ffmpeg -y -framerate 50 -i frames/%04d.png -filter_complex "[0:v] scale=600:600,fps=50,split [a][b];[a] palettegen [p];[b][p] paletteuse" loop-scaled.gif`,
+            `ffmpeg -y -framerate 50 -i frames/%04d.png -filter_complex "[0:v] scale=510:510,fps=50,split [a][b];[a] palettegen [p];[b][p] paletteuse" ${name}-scaled.gif`,
         ["mode-755"]
     );
 
@@ -368,7 +377,7 @@ async function _generateTar(tape, frames) {
     out = tape.append(
         "mp4-30s-loop.sh",
         "#!/bin/sh\n" +
-            `ffmpeg -y -framerate 50 -i frames/%04d.png -filter_complex loop=${repetitions}:${frames}:0 -vcodec libx264 -pix_fmt yuv420p -crf 20 loop.mp4`,
+            `ffmpeg -y -framerate 50 -i frames/%04d.png -filter_complex loop=${repetitions}:${frames}:0 -vcodec libx264 -pix_fmt yuv420p -crf 20 ${name}.mp4`,
         ["mode-755"]
     );
 
@@ -384,7 +393,7 @@ async function _generateTar(tape, frames) {
     let url = "data:application/tar;base64," + base64;
     let element = document.createElement("a");
     element.setAttribute("href", url);
-    element.setAttribute("download", "loop.tar");
+    element.setAttribute("download", `${name}.tar`);
     element.style.display = "none";
     document.body.appendChild(element);
     element.click();
