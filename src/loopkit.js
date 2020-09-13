@@ -8,17 +8,13 @@ try {
 }
 
 class LoopKit {
-    constructor(
-        container,
-        {onFrame, antialias, bgColor, frames, debugKeystrokes, stillsOpacity, bpm, beatsPerLoop, name}
-    ) {
+    constructor(container, {onFrame, antialias, bgColor, frames, debugKeystrokes, bpm, beatsPerLoop, name}) {
         container = typeof container == "string" ? document.querySelector(container) : container;
         this.container = container;
         this.width = 0;
         this.height = 0;
         this.loop = new Loop(frames || 60);
         this.debugKeystrokes = debugKeystrokes === undefined ? true : debugKeystrokes;
-        this.stillsOpacity = stillsOpacity || 0.2;
 
         this.canvas = document.createElement("canvas");
         this.container.appendChild(this.canvas);
@@ -34,10 +30,8 @@ class LoopKit {
             antialias: antialias !== undefined ? antialias : true,
             resolution: window.devicePixelRatio,
             autoDensity: true,
-
-            // want these for generating stills
-            clearBeforeRender: false,
             preserveDrawingBuffer: true,
+            clearBeforeRender: false,
         });
 
         this._root = new PIXI.Container();
@@ -274,28 +268,21 @@ class LoopKit {
         }
     }
 
-    exportStill(filename) {
-        // renders all frames on the canvas and then exports the render for a still
-        let renderTexture = PIXI.RenderTexture.create({
-            width: this.width,
-            height: this.height,
-            resolution: 2,
-        });
-
+    exportStill(filename, opacity) {
         this.stop();
         this.loop.frameFull = 0;
-        this.graphics.alpha = this.stillsOpacity;
+        this.graphics.alpha = opacity || 0.2;
+
         this.loop.fullCircle((_frame, idx) => {
             this.bg.visible = idx == 0; // we want our smear, so disable background after first frame
             this._onFrame(false);
             console.log("rendering", _frame, idx);
-            this.renderer.render(this._root, renderTexture, false);
         });
         this.graphics.alpha = 1;
         this.bg.visible = true;
 
         if (filename) {
-            let objectURL = this.renderer.plugins.extract.base64(renderTexture, "image/png", 1);
+            let objectURL = this.canvas.toDataURL();
             let element = document.createElement("a");
             element.setAttribute("href", objectURL);
             element.setAttribute("download", filename);
@@ -308,7 +295,6 @@ class LoopKit {
     }
 
     onKeyDown(evt) {
-        let prefix = this.name ? `${this.name} - ` : "";
         if (evt.key == " ") {
             this.pause();
         } else if (evt.code == "ArrowRight") {
@@ -321,9 +307,9 @@ class LoopKit {
             this.stop();
             this.exportLoop();
         } else if (evt.code == "KeyP" && !evt.shiftKey && !evt.ctrlKey) {
-            this.export(`${prefix}capture.png`, 2);
+            this.export(`${this.name || "capture"}.png`, 2);
         } else if (evt.code == "KeyR" && !evt.ctrlKey) {
-            let filename = evt.shiftKey ? `${prefix}still.png` : null;
+            let filename = evt.shiftKey ? `${this.name ? this.name + "-" : ""}still.png` : null;
             this.exportStill(filename);
         }
     }
