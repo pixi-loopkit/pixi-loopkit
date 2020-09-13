@@ -1,6 +1,6 @@
 {
     "name": "pixi-loopkit",
-    "version": "0.1.12",
+    "version": "0.1.13",
     "description": "Create cool experiments and generate looping gifs as output",
     "repository": {
         "type": "git",
@@ -30,7 +30,8 @@
     "dependencies": {
         "bezier-easing": "^2.1.0",
         "chroma-js": "^2.1.0",
-        "pixi.js": "^5.3.3"
+        "pixi.js": "^5.3.3",
+        "tar-js": "^0.3.0"
     },
     "devDependencies": {
         "@babel/core": "^7.11.4",
@@ -39,7 +40,6 @@
         "html-webpack-plugin": "^4.3.0",
         "path": "^0.12.7",
         "regenerator-runtime": "^0.13.7",
-        "tar-js": "^0.3.0",
         "webpack": "^4.44.1",
         "webpack-cli": "^3.3.12",
         "webpack-dev-server": "^3.11.0"

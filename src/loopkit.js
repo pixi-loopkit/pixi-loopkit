@@ -1,4 +1,6 @@
 import {Loop, hexColor} from ".";
+import Tar from "tar-js";
+
 let PIXI = {};
 try {
     PIXI = require("pixi.js");
@@ -231,17 +233,6 @@ class LoopKit {
 
     async exportLoop() {
         this.stop();
-        let tape;
-        try {
-            let Tar = require("tar-js");
-            tape = new Tar();
-        } catch (e) {
-            console.warn(
-                "Couldn't import tar-js and will export PNGs one-by one." +
-                    "If you miss a frame after export, simply re-export till you have all the frames"
-            );
-        }
-
         function stringToUint8(input) {
             let out = new Uint8Array(input.length);
             for (let i = 0; i < input.length; i++) {
@@ -250,22 +241,18 @@ class LoopKit {
             return out;
         }
 
+        let tape = new Tar();
         await this.loop.fullCircle(async (_frame, idx) => {
             this._onFrame(false);
             let paddedIdx = ("0000" + idx).slice(-4);
             let filename = `frames/${paddedIdx}.png`;
-            if (tape) {
-                console.log("Adding", filename);
-                let data = this.export().slice("data:image/png;base64,".length);
-                data = stringToUint8(atob(data));
-                await tape.append(filename, data);
-            } else {
-                this.export(filename);
-            }
+            console.log("Adding", filename);
+            let data = this.export().slice("data:image/png;base64,".length);
+            data = stringToUint8(atob(data));
+            await tape.append(filename, data);
         });
-        if (tape) {
-            await _generateTar(tape, this.loop.frames, this.name);
-        }
+
+        await _generateTar(tape, this.loop.frames, this.name);
     }
 
     exportStill(filename, opacity) {
@@ -340,7 +327,7 @@ class LoopKit {
 }
 
 async function _generateTar(tape, frames, name) {
-    console.log("Zipping...");
+    console.log("Stuffing into tar...");
     name = name || "loop";
 
     // we will gonna add a few silly bash scripts
