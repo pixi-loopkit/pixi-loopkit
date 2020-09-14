@@ -1,13 +1,6 @@
-import {Loop, hexColor} from ".";
+import * as PIXI from "pixi.js";
+import {Loop, Graphics} from ".";
 import Tar from "tar-js";
-
-let PIXI = {};
-try {
-    PIXI = require("pixi.js");
-} catch (e) {
-    // on serverside rendering, rather than dying gracefully, pixi will explode as it tries to access window
-    console.log("Failed to import PIXI somehow. You're on your own!");
-}
 
 class LoopKit {
     constructor(container, {onFrame, antialias, bgColor, frames, debugKeystrokes, bpm, beatsPerLoop, name}) {
@@ -37,12 +30,12 @@ class LoopKit {
         });
 
         this._root = new PIXI.Container();
-        this.bg = new PIXI.Graphics();
+        this.bg = new Graphics();
         if (bgColor) {
-            this.bgColor = hexColor(bgColor);
+            this.bgColor = bgColor;
             this._root.addChild(this.bg);
         }
-        this.graphics = new PIXI.Graphics();
+        this.graphics = new Graphics();
         this._root.addChild(this.graphics);
 
         // bind the callback funcs so they don't lose our context

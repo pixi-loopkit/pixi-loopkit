@@ -81,11 +81,17 @@
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 1);
+/******/ 	return __webpack_require__(__webpack_require__.s = 3);
 /******/ })
 /************************************************************************/
 /******/ ([
 /* 0 */
+/***/ (function(module, exports) {
+
+module.exports = PIXI;
+
+/***/ }),
+/* 1 */
 /***/ (function(module, exports) {
 
 /**
@@ -198,7 +204,13 @@ module.exports = function bezier (mX1, mY1, mX2, mY2) {
 
 
 /***/ }),
-/* 1 */
+/* 2 */
+/***/ (function(module, exports) {
+
+module.exports = chroma;
+
+/***/ }),
+/* 3 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -212,13 +224,13 @@ __webpack_require__.d(__webpack_exports__, "LoopKit", function() { return /* ree
 __webpack_require__.d(__webpack_exports__, "Props", function() { return /* reexport */ Props; });
 __webpack_require__.d(__webpack_exports__, "Circular", function() { return /* reexport */ Circular; });
 __webpack_require__.d(__webpack_exports__, "RadialCluster", function() { return /* reexport */ RadialCluster; });
+__webpack_require__.d(__webpack_exports__, "Graphics", function() { return /* reexport */ graphics_Graphics; });
 __webpack_require__.d(__webpack_exports__, "RC", function() { return /* reexport */ RC; });
 __webpack_require__.d(__webpack_exports__, "scale", function() { return /* reexport */ scale; });
 __webpack_require__.d(__webpack_exports__, "Sound", function() { return /* reexport */ Sound; });
-__webpack_require__.d(__webpack_exports__, "hexColor", function() { return /* binding */ hexColor; });
 
 // EXTERNAL MODULE: ./node_modules/bezier-easing/src/index.js
-var src = __webpack_require__(0);
+var src = __webpack_require__(1);
 
 // CONCATENATED MODULE: ./src/easing.js
 
@@ -278,6 +290,61 @@ const Easing = {
         }
     }),
 };
+
+
+
+// EXTERNAL MODULE: external "chroma"
+var external_chroma_ = __webpack_require__(2);
+var external_chroma_default = /*#__PURE__*/__webpack_require__.n(external_chroma_);
+
+// EXTERNAL MODULE: external "PIXI"
+var external_PIXI_ = __webpack_require__(0);
+
+// CONCATENATED MODULE: ./src/graphics.js
+
+
+
+class graphics_Graphics extends external_PIXI_["Graphics"] {
+    constructor() {
+        super();
+    }
+
+    lineStyle(width, color, alpha, alignment, native, cap, join, miterLimit) {
+        if (typeof width != "number") {
+            // we have ourselves an options object rather than a full listing
+            ({width, color, alpha, alignment, native, cap, join, miterLimit} = width);
+        }
+        width = setDefault(width, 0);
+        color = setDefault(color, 0);
+        alpha = setDefault(alpha, 1);
+        alignment = setDefault(alignment, 0.5);
+        native = setDefault(native, false);
+        cap = setDefault(cap, external_PIXI_["LINE_CAP"].BUTT);
+        join = setDefault(join, external_PIXI_["LINE_JOIN"].MITER);
+        miterLimit = setDefault(miterLimit, 10);
+
+        if (typeof color != "number") {
+            // PIXI wants hex, we give it hex
+            color = external_chroma_default()(color).num();
+        }
+
+        super.lineStyle({width, color, alpha, alignment, native, cap, join, miterLimit});
+    }
+
+    beginFill(color, alpha) {
+        if (typeof color != "number") {
+            // PIXI wants hex, we give it hex
+            color = external_chroma_default()(color);
+            alpha = alpha != undefined ? alpha : color.alpha();
+            color = color.num();
+        }
+        super.beginFill(color, alpha);
+    }
+}
+
+function setDefault(val, def) {
+    return val !== undefined ? val : def;
+}
 
 
 
@@ -475,28 +542,23 @@ class Loop {
 
 
 
+// EXTERNAL MODULE: ./node_modules/tar-js/lib/tar.js
+var tar = __webpack_require__(5);
+var tar_default = /*#__PURE__*/__webpack_require__.n(tar);
+
 // CONCATENATED MODULE: ./src/loopkit.js
 
-let PIXI = {};
-try {
-    PIXI = __webpack_require__(4);
-} catch (e) {
-    // on serverside rendering, rather than dying gracefully, pixi will explode as it tries to access window
-    console.log("Failed to import PIXI somehow. You're on your own!");
-}
+
+
 
 class loopkit_LoopKit {
-    constructor(
-        container,
-        {onFrame, antialias, bgColor, frames, debugKeystrokes, stillsOpacity, bpm, beatsPerLoop, name}
-    ) {
+    constructor(container, {onFrame, antialias, bgColor, frames, debugKeystrokes, bpm, beatsPerLoop, name}) {
         container = typeof container == "string" ? document.querySelector(container) : container;
         this.container = container;
         this.width = 0;
         this.height = 0;
         this.loop = new Loop(frames || 60);
         this.debugKeystrokes = debugKeystrokes === undefined ? true : debugKeystrokes;
-        this.stillsOpacity = stillsOpacity || 0.2;
 
         this.canvas = document.createElement("canvas");
         this.container.appendChild(this.canvas);
@@ -507,24 +569,22 @@ class loopkit_LoopKit {
         // solely for exports but who knows, maybe we'll find a higher purpose later
         this.name = name;
 
-        this.renderer = new PIXI.Renderer({
+        this.renderer = new external_PIXI_["Renderer"]({
             view: this.canvas,
             antialias: antialias !== undefined ? antialias : true,
             resolution: window.devicePixelRatio,
             autoDensity: true,
-
-            // want these for generating stills
-            clearBeforeRender: false,
             preserveDrawingBuffer: true,
+            clearBeforeRender: false,
         });
 
-        this._root = new PIXI.Container();
-        this.bg = new PIXI.Graphics();
+        this._root = new external_PIXI_["Container"]();
+        this.bg = new graphics_Graphics();
         if (bgColor) {
-            this.bgColor = hexColor(bgColor);
+            this.bgColor = bgColor;
             this._root.addChild(this.bg);
         }
-        this.graphics = new PIXI.Graphics();
+        this.graphics = new graphics_Graphics();
         this._root.addChild(this.graphics);
 
         // bind the callback funcs so they don't lose our context
@@ -537,7 +597,7 @@ class loopkit_LoopKit {
 
         this._renderPending = null;
 
-        this.ticker = PIXI.Ticker.shared;
+        this.ticker = external_PIXI_["Ticker"].shared;
         this.ticker.add(this._onFrame);
         this.ticker.stop();
         this._setDimensions();
@@ -715,17 +775,6 @@ class loopkit_LoopKit {
 
     async exportLoop() {
         this.stop();
-        let tape;
-        try {
-            let Tar = __webpack_require__(5);
-            tape = new Tar();
-        } catch (e) {
-            console.warn(
-                "Couldn't import tar-js and will export PNGs one-by one." +
-                    "If you miss a frame after export, simply re-export till you have all the frames"
-            );
-        }
-
         function stringToUint8(input) {
             let out = new Uint8Array(input.length);
             for (let i = 0; i < input.length; i++) {
@@ -734,46 +783,35 @@ class loopkit_LoopKit {
             return out;
         }
 
+        let tape = new tar_default.a();
         await this.loop.fullCircle(async (_frame, idx) => {
             this._onFrame(false);
             let paddedIdx = ("0000" + idx).slice(-4);
             let filename = `frames/${paddedIdx}.png`;
-            if (tape) {
-                console.log("Adding", filename);
-                let data = this.export().slice("data:image/png;base64,".length);
-                data = stringToUint8(atob(data));
-                await tape.append(filename, data);
-            } else {
-                this.export(filename);
-            }
+            console.log("Adding", filename);
+            let data = this.export().slice("data:image/png;base64,".length);
+            data = stringToUint8(atob(data));
+            await tape.append(filename, data);
         });
-        if (tape) {
-            await _generateTar(tape, this.loop.frames, this.name);
-        }
+
+        await _generateTar(tape, this.loop.frames, this.name);
     }
 
-    exportStill(filename) {
-        // renders all frames on the canvas and then exports the render for a still
-        let renderTexture = PIXI.RenderTexture.create({
-            width: this.width,
-            height: this.height,
-            resolution: 2,
-        });
-
+    exportStill(filename, opacity) {
         this.stop();
         this.loop.frameFull = 0;
-        this.graphics.alpha = this.stillsOpacity;
+        this.graphics.alpha = opacity || 0.2;
+
         this.loop.fullCircle((_frame, idx) => {
             this.bg.visible = idx == 0; // we want our smear, so disable background after first frame
             this._onFrame(false);
             console.log("rendering", _frame, idx);
-            this.renderer.render(this._root, renderTexture, false);
         });
         this.graphics.alpha = 1;
         this.bg.visible = true;
 
         if (filename) {
-            let objectURL = this.renderer.plugins.extract.base64(renderTexture, "image/png", 1);
+            let objectURL = this.canvas.toDataURL();
             let element = document.createElement("a");
             element.setAttribute("href", objectURL);
             element.setAttribute("download", filename);
@@ -786,7 +824,6 @@ class loopkit_LoopKit {
     }
 
     onKeyDown(evt) {
-        let prefix = this.name ? `${this.name} - ` : "";
         if (evt.key == " ") {
             this.pause();
         } else if (evt.code == "ArrowRight") {
@@ -799,9 +836,9 @@ class loopkit_LoopKit {
             this.stop();
             this.exportLoop();
         } else if (evt.code == "KeyP" && !evt.shiftKey && !evt.ctrlKey) {
-            this.export(`${prefix}capture.png`, 2);
+            this.export(`${this.name || "capture"}.png`, 2);
         } else if (evt.code == "KeyR" && !evt.ctrlKey) {
-            let filename = evt.shiftKey ? `${prefix}still.png` : null;
+            let filename = evt.shiftKey ? `${this.name ? this.name + "-" : ""}still.png` : null;
             this.exportStill(filename);
         }
     }
@@ -832,7 +869,7 @@ class loopkit_LoopKit {
 }
 
 async function _generateTar(tape, frames, name) {
-    console.log("Zipping...");
+    console.log("Stuffing into tar...");
     name = name || "loop";
 
     // we will gonna add a few silly bash scripts
@@ -1260,10 +1297,6 @@ class Sound {
 
 
 
-// EXTERNAL MODULE: external "chroma"
-var external_chroma_ = __webpack_require__(3);
-var external_chroma_default = /*#__PURE__*/__webpack_require__.n(external_chroma_);
-
 // CONCATENATED MODULE: ./src/index.js
 
 
@@ -1280,12 +1313,9 @@ var external_chroma_default = /*#__PURE__*/__webpack_require__.n(external_chroma
 
 
 
-let hexColor = color => external_chroma_default()(color).num();
-
-
 
 /***/ }),
-/* 2 */
+/* 4 */
 /***/ (function(module, exports) {
 
 /*
@@ -1412,19 +1442,6 @@ let hexColor = color => external_chroma_default()(color).num();
 
 
 /***/ }),
-/* 3 */
-/***/ (function(module, exports) {
-
-module.exports = chroma;
-
-/***/ }),
-/* 4 */
-/***/ (function(module, exports) {
-
-if(typeof PIXI === 'undefined') {var e = new Error("Cannot find module 'PIXI'"); e.code = 'MODULE_NOT_FOUND'; throw e;}
-module.exports = PIXI;
-
-/***/ }),
 /* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -1437,7 +1454,7 @@ module.exports = PIXI;
 	"use strict";
 
 	var header = __webpack_require__(6),
-		utils = __webpack_require__(2),
+		utils = __webpack_require__(4),
 		recordSize = 512,
 		blockSize;
 
@@ -1580,7 +1597,7 @@ struct posix_header {             // byte offset
 };
 */
 
-	var utils = __webpack_require__(2),
+	var utils = __webpack_require__(4),
 		headerFormat;
 	
 	headerFormat = [

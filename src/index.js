@@ -1,4 +1,5 @@
 import {Easing} from "./easing.js";
+import {Graphics} from "./graphics.js";
 import {Circular, RadialCluster} from "./layout.js";
 import {Loop} from "./loop.js";
 import {LoopKit} from "./loopkit.js";
@@ -8,10 +9,7 @@ import {Sound} from "./sound.js";
 
 export {Easing, Loop, LoopKit, Props};
 export {Circular, RadialCluster};
+export {Graphics};
 export {RC};
 export {scale};
 export {Sound};
-
-import chroma from "chroma-js";
-let hexColor = color => chroma(color).num();
-export {hexColor};

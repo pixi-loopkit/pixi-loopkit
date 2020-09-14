@@ -1,28 +1,28 @@
-import {LoopKit, hexColor} from "../src";
+import {LoopKit, Graphics} from "../src";
 
 let samples = {
     "direct-draw": function () {
-        // import {LoopKit, hexColor} from "pixi-loopkit";
+        // import {LoopKit, Graphics} from "pixi-loopkit";
 
         let kit = new LoopKit(".direct-draw .kit", {
             bgColor: "#eee",
         });
 
         let graphics = kit.graphics;
-        graphics.lineStyle(3, hexColor("#666"), 1);
+        graphics.lineStyle(3, "#666");
         graphics.drawRect(100.5, 100.5, 100, 100);
     },
 
     "as-object": function () {
-        // import {LoopKit, hexColor} from "pixi-loopkit";
+        // import {LoopKit, Graphics} from "pixi-loopkit";
         // import * as PIXI from "pixi.js"
 
-        class Thinger extends PIXI.Graphics {
+        class Thinger extends Graphics {
             constructor(x, y, w, h) {
                 super();
                 [this.x, this.y] = [x + w / 2, y + h / 2];
 
-                this.lineStyle(3, hexColor("#555"), 1);
+                this.lineStyle(3, "#555");
                 this.drawRect(-w / 2, -h / 2, w, h);
             }
         }

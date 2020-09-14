@@ -7,14 +7,14 @@ npm install pixi-loopkit
 
 ES6
 ```
-import {LoopKit, Props, Loop, scale, hexColor} from "pixi-loopkit";
+import {LoopKit, Graphics, Props, Loop, scale} from "pixi-loopkit";
 
-class Thinger extends PIXI.Graphics {
+class Thinger extends Graphics {
     constructor(x, y, w, h) {
         super();
         [this.x, this.y] = [x + w / 2, y + h / 2];
 
-        this.lineStyle(3, hexColor("#555"), 1);
+        this.lineStyle(3, "#555");
         this.drawRect(-w / 2, -h / 2, w, h);
     }
 }
