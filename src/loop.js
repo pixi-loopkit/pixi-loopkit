@@ -66,9 +66,9 @@ class Loop {
     tick(frames) {
         let prevFrame = this.frameFull;
         let nextFrame = prevFrame + (frames || 1);
-        // while normally you'd loop 0..last, we loop 0..last-1 as the final frame should be the same as first frame
-        let totalFrames = this.frames - 1;
-        nextFrame = (totalFrames + nextFrame) % totalFrames;
+
+        // wrap around
+        nextFrame = (this.frames + nextFrame) % this.frames;
 
         let forward = (frames || 1) > 0;
         if ((forward && prevFrame > nextFrame) || (!forward && prevFrame < nextFrame)) {
