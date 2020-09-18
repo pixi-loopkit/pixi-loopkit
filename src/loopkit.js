@@ -5,7 +5,7 @@ import Tar from "tar-js";
 PIXI.utils.skipHello();
 
 class LoopKit {
-    constructor(container, {onFrame, antialias, bgColor, frames, debugKeystrokes, bpm, beatsPerLoop, name}) {
+    constructor(container, {onFrame, antialias, bgColor, frames, debugKeystrokes, bpm, beatsPerLoop, name, onBeat}) {
         container = typeof container == "string" ? document.querySelector(container) : container;
         this.container = container;
         this.width = 0;
@@ -59,6 +59,9 @@ class LoopKit {
         this._ticks = 0;
         this._fps = 0;
 
+        this.onBeat = onBeat;
+        this._prevBeatTs = null;
+
         if (onFrame) {
             this.onFrame = onFrame.bind(this);
             this.ticker.start();
@@ -78,8 +81,15 @@ class LoopKit {
                 this._beatTs = this._beatTs || Date.now();
                 let time = Date.now();
                 let delta = (time - this._beatTs) / 1000;
-                // instead of ticking, we tell loop which frame we're on as it's we use loop's frame merely so we don't carry around
+                // instead of ticking, we tell loop which frame we're on
                 let next = ((delta * (this.bpm / 60)) / this.beatsPerLoop) % 1;
+
+                let beatDelta = delta * (this.bpm / 60) % 1;
+                if (beatDelta > 0.95 && (time - this._prevBeatTs) > 300) {
+                    this._prevBeatTs = time;
+                    this.onBeat();
+                }
+
                 if (next < this.frame) {
                     // full loop
                     this.loop.loops += 1;
