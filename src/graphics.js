@@ -1,5 +1,6 @@
 import chroma from "chroma-js";
 import * as PIXI from "pixi.js";
+PIXI.utils.skipHello();
 
 class Graphics extends PIXI.Graphics {
     constructor() {

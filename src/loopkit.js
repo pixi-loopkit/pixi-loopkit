@@ -2,6 +2,8 @@ import * as PIXI from "pixi.js";
 import {Loop, Graphics} from ".";
 import Tar from "tar-js";
 
+PIXI.utils.skipHello();
+
 class LoopKit {
     constructor(container, {onFrame, antialias, bgColor, frames, debugKeystrokes, bpm, beatsPerLoop, name}) {
         container = typeof container == "string" ? document.querySelector(container) : container;
