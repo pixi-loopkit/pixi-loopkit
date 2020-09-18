@@ -50,7 +50,7 @@ class LoopKit {
 
         this._renderPending = null;
 
-        this.ticker = PIXI.Ticker.shared;
+        this.ticker = new PIXI.Ticker();
         this.ticker.add(this._onFrame);
         this.ticker.stop();
         this._setDimensions();
