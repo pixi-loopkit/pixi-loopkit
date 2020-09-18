@@ -297,10 +297,16 @@ class LoopKit {
     }
 
     _connectListeners(connect) {
-        let command = connect ? window.addEventListener : window.removeEventListener;
-        command("resize", this._setDimensions);
-        if (this.debugKeystrokes) {
-            command("keydown", this.onKeyDown);
+        if (connect) {
+            window.addEventListener("resize", this._setDimensions);
+
+            if (this.debugKeystrokes) {
+                this.canvas.setAttribute("tabindex", 0);
+                this.canvas.addEventListener("keydown", this.onKeyDown);
+            }
+        } else {
+            window.removeEventListener("resize", this._setDimensions);
+            this.canvas.addEventListener("keydown", this.onKeyDown);
         }
     }
 
