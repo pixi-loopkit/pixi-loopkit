@@ -342,11 +342,19 @@ async function _generateTar(tape, frames, name) {
     );
 
     // we want the video to be approx 30 seconds for slow contemplation
+    out = tape.append(
+        "mp4.sh",
+        "#!/bin/sh\n" +
+            `ffmpeg -y -framerate 50 -i frames/%04d.png -vcodec libx264 -pix_fmt yuv420p -crf 20 ${name}.mp4`,
+        ["mode-755"]
+    );
+
+    // we want the video to be approx 30 seconds for slow contemplation
     let repetitions = Math.round((30 * 60) / frames);
     out = tape.append(
         "mp4-30s-loop.sh",
         "#!/bin/sh\n" +
-            `ffmpeg -y -framerate 50 -i frames/%04d.png -filter_complex loop=${repetitions}:${frames}:0 -vcodec libx264 -pix_fmt yuv420p -crf 20 ${name}.mp4`,
+            `ffmpeg -y -framerate 50 -i frames/%04d.png -filter_complex loop=${repetitions}:${frames}:0 -vcodec libx264 -pix_fmt yuv420p -crf 20 ${name}-30s.mp4`,
         ["mode-755"]
     );
 
