@@ -1,11 +1,11 @@
 import * as PIXI from "pixi.js";
-import {Loop, Graphics} from ".";
+import {Graphics, Loop, Beat} from ".";
 import Tar from "tar-js";
 
 PIXI.utils.skipHello();
 
 class LoopKit {
-    constructor(container, {onFrame, antialias, bgColor, frames, debugKeystrokes, bpm, beatsPerLoop, name, onBeat}) {
+    constructor(container, {onFrame, antialias, bgColor, frames, debugKeystrokes, bpm, beatsPerLoop, onBeat, name}) {
         container = typeof container == "string" ? document.querySelector(container) : container;
         this.container = container;
         this.width = 0;
@@ -15,6 +15,8 @@ class LoopKit {
 
         this.canvas = document.createElement("canvas");
         this.container.appendChild(this.canvas);
+
+        this.beat = new Beat(bpm, beatsPerLoop);
 
         this.bpm = bpm;
         this.beatsPerLoop = beatsPerLoop || 1;
@@ -59,15 +61,11 @@ class LoopKit {
         this._ticks = 0;
         this._fps = 0;
 
-        this.onBeat = onBeat;
-        this._prevBeatTs = null;
-
         if (onFrame) {
             this.onFrame = onFrame.bind(this);
             this.ticker.start();
         }
-
-        this._beatTs = Date.now();
+        this.onBeat = onBeat;
     }
 
     _onFrame(tick = true) {
@@ -77,19 +75,11 @@ class LoopKit {
         }
 
         if (tick) {
-            if (this.bpm) {
-                this._beatTs = this._beatTs || Date.now();
-                let time = Date.now();
-                let delta = (time - this._beatTs) / 1000;
-                // instead of ticking, we tell loop which frame we're on
-                let next = ((delta * (this.bpm / 60)) / this.beatsPerLoop) % 1;
-
-                let beatDelta = delta * (this.bpm / 60) % 1;
-                if (beatDelta > 0.95 && (time - this._prevBeatTs) > 300) {
-                    this._prevBeatTs = time;
+            if (this.beat.bpm) {
+                let [next, discreet] = this.beat.tick();
+                if (discreet && this.onBeat) {
                     this.onBeat();
                 }
-
                 if (next < this.frame) {
                     // full loop
                     this.loop.loops += 1;
@@ -124,31 +114,26 @@ class LoopKit {
     set frame(frame) {
         if (this.bpm) {
             // rewinding time the according amount
-            this._beatTs = new Date(Date.now() - ((frame * 1000) / (this.bpm / 60)) * this.beatsPerLoop);
+            this.beat.rewind(frame);
+        } else {
+            this.loop.frame = frame;
         }
-        this.loop.frame = frame;
     }
 
     get bpm() {
-        return this._bpm;
+        return this.beat.bpm;
     }
 
     get beatsPerLoop() {
-        return this._beatsPerLoop;
+        return this.beat.beatsPerLoop;
     }
 
     set bpm(bpm) {
-        let now = Date.now();
-        let ms = now - this._beatTs;
-        this._beatTs = new Date(now - (ms * this._bpm) / bpm);
-        this._bpm = bpm;
+        this.beat.bpm = bpm;
     }
 
     set beatsPerLoop(beats) {
-        let now = Date.now();
-        let ms = now - this._beatTs;
-        this._beatTs = new Date(now - (ms / this._beatsPerLoop) * beats);
-        this._beatsPerLoop = beats;
+        this.beat.beatsPerLoop = beats;
     }
 
     get fps() {
