@@ -44,9 +44,9 @@ class LoopKit {
 
         // bind the callback funcs so they don't lose our context
         // the behavior can be overridden on the API caller side by using an arrow function
-        this.onKeyDown = this.onKeyDown.bind(this);
+        this._onKeyDown = this._onKeyDown.bind(this);
         this._onFrame = this._onFrame.bind(this);
-        this._setDimensions = this._setDimensions.bind(this);
+        this.resize = this.resize.bind(this);
 
         this._connectListeners(true);
 
@@ -55,7 +55,7 @@ class LoopKit {
         this.ticker = new PIXI.Ticker();
         this.ticker.add(this._onFrame);
         this.ticker.stop();
-        this._setDimensions();
+        this.resize();
 
         this._fpsTs = [];
         this._ticks = 0;
@@ -177,11 +177,11 @@ class LoopKit {
     removeChild(...child) {
         this.graphics.removeChild(...child);
     }
-    children() {
+    get children() {
         return this.graphics.children;
     }
 
-    _setDimensions(evt) {
+    resize(evt) {
         let box = this.canvas.parentElement.getBoundingClientRect();
         [this.width, this.height] = [box.width, box.height];
         this.canvas.style.width = this.width;
@@ -271,7 +271,7 @@ class LoopKit {
         }
     }
 
-    onKeyDown(evt) {
+    _onKeyDown(evt) {
         if (evt.key == " ") {
             this.pause();
         } else if (evt.code == "ArrowRight") {
@@ -293,15 +293,15 @@ class LoopKit {
 
     _connectListeners(connect) {
         if (connect) {
-            window.addEventListener("resize", this._setDimensions);
+            window.addEventListener("resize", this.resize);
 
             if (this.debugKeystrokes) {
                 this.canvas.setAttribute("tabindex", 0);
-                this.canvas.addEventListener("keydown", this.onKeyDown);
+                this.canvas.addEventListener("keydown", this._onKeyDown);
             }
         } else {
-            window.removeEventListener("resize", this._setDimensions);
-            this.canvas.addEventListener("keydown", this.onKeyDown);
+            window.removeEventListener("resize", this.resize);
+            this.canvas.addEventListener("keydown", this._onKeyDown);
         }
     }
 

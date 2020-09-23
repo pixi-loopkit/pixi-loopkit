@@ -12,14 +12,14 @@ class Graphics extends PIXI.Graphics {
             // we have ourselves an options object rather than a full listing
             ({width, color, alpha, alignment, native, cap, join, miterLimit} = width);
         }
-        width = setDefault(width, 0);
-        color = setDefault(color, 0);
-        alpha = setDefault(alpha, 1);
-        alignment = setDefault(alignment, 0.5);
-        native = setDefault(native, false);
-        cap = setDefault(cap, PIXI.LINE_CAP.BUTT);
-        join = setDefault(join, PIXI.LINE_JOIN.MITER);
-        miterLimit = setDefault(miterLimit, 10);
+        width = _setDefault(width, 0);
+        color = _setDefault(color, 0);
+        alpha = _setDefault(alpha, 1);
+        alignment = _setDefault(alignment, 0.5);
+        native = _setDefault(native, false);
+        cap = _setDefault(cap, PIXI.LINE_CAP.BUTT);
+        join = _setDefault(join, PIXI.LINE_JOIN.MITER);
+        miterLimit = _setDefault(miterLimit, 10);
 
         if (typeof color != "number") {
             // PIXI wants hex, we give it hex
@@ -37,7 +37,7 @@ class Graphics extends PIXI.Graphics {
     }
 }
 
-function setDefault(val, def) {
+function _setDefault(val, def) {
     return val !== undefined ? val : def;
 }
 
@@ -51,4 +51,4 @@ function parseColor(color, alpha) {
     return [color.num(), alpha];
 }
 
-export {Graphics};
+export {Graphics, parseColor};

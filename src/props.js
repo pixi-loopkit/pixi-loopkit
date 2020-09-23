@@ -169,7 +169,7 @@ function round(val, precision = 0) {
     return Math.round(val * Math.pow(10, precision)) / Math.pow(10, precision);
 }
 
-function scale(val, min, max, defaultVal, step) {
+function scale(val, min, max, step, defaultVal) {
     // converts the 0..1 value into min..max
     // default is there for convenience
     val = val == null ? (defaultVal - min) / (max - min) || 0 : val;
