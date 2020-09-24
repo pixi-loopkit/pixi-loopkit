@@ -9,7 +9,6 @@ import {Sound} from "./sound.js";
 
 export {Beat}
 export {Easing, Loop, LoopKit, Props};
-export {Circular, RadialCluster};
 export {Graphics};
 export {RC};
 export {scale};
