@@ -1,7 +1,6 @@
 import {Beat} from "./beat.js";
 import {Easing} from "./easing.js";
 import {Graphics} from "./graphics.js";
-import {Circular, RadialCluster} from "./layout.js";
 import {Loop} from "./loop.js";
 import {LoopKit} from "./loopkit.js";
 import {Props, scale} from "./props.js";
