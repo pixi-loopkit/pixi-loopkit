@@ -60,7 +60,7 @@ class Loop {
     }
 
     delay(frames) {
-        return (Math.abs(this.frameFull - frames) % this.frames) / this.frames;
+        return (Math.abs(this.frameFull - frames + this.frames) % this.frames) / this.frames;
     }
 
     tick(frames) {
