@@ -2,9 +2,13 @@ import chroma from "chroma-js";
 import * as PIXI from "pixi.js";
 PIXI.utils.skipHello();
 
+import {Matrix} from "./matrix.js";
+
 class Graphics extends PIXI.Graphics {
     constructor() {
         super();
+        this.ctm = new Matrix(); // cpntext translation matrix; grabbed from cairo
+        this._contexts = [];
     }
 
     lineStyle(width, color, alpha, alignment, native, cap, join, miterLimit) {
@@ -34,6 +38,51 @@ class Graphics extends PIXI.Graphics {
             [color, alpha] = parseColor(color, alpha);
         }
         super.beginFill(color, alpha);
+    }
+
+    // context transformation matrix ops so that we can move around in graphics, without having to
+    // go through children
+
+    _applyTransform(matrix) {
+        // need to break paths on any transforms or hilarity ensues (e.g. instructions taking effect AFTER the path has
+        // been drawn.
+        if (this.currentPath) {
+            this.startPoly();
+        }
+        this.ctm = matrix;
+    }
+
+    translate(x, y) {
+        this._applyTransform(this.ctm.translate(x, y));
+    }
+    rotate(rad) {
+        this._applyTransform(this.ctm.rotate(rad));
+    }
+    scale(x, y) {
+        this._applyTransform(this.ctm.scale(x, y));
+    }
+
+    skew(x, y) {
+        this._applyTransform(this.ctm.skew(x, y));
+    }
+
+    drawShape(shape) {
+        // overriding graphics drawShape so that we can feed it in our own transformation matrix
+        let matrix = new PIXI.Matrix(...this.ctm.toArray());
+        if (!this._holeMode) {
+            this._geometry.drawShape(shape, this._fillStyle.clone(), this._lineStyle.clone(), matrix);
+        } else {
+            this._geometry.drawHole(shape, matrix);
+        }
+        return this;
+    }
+
+    save() {
+        this._contexts.push(new Matrix(this.ctm));
+    }
+
+    restore() {
+        this.ctm = new Matrix(this._contexts.splice(this._contexts.length - 1, 1)[0]);
     }
 }
 
