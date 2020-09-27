@@ -43,27 +43,25 @@ class Graphics extends PIXI.Graphics {
     // context transformation matrix ops so that we can move around in graphics, without having to
     // go through children
 
-    _applyTransform(matrix) {
-        // need to break paths on any transforms or hilarity ensues (e.g. instructions taking effect AFTER the path has
-        // been drawn.
-        if (this.currentPath) {
-            this.startPoly();
-        }
-        this.ctm = matrix;
+    _applyTransform(func) {
+        // finish any drawing before we start moving around
+        this.finishPoly();
+        func();
     }
 
     translate(x, y) {
-        this._applyTransform(this.ctm.translate(x, y));
+        this._applyTransform(() => this.ctm.translate(x, y));
+
     }
     rotate(rad) {
-        this._applyTransform(this.ctm.rotate(rad));
+        this._applyTransform(() => this.ctm.rotate(rad));
     }
     scale(x, y) {
-        this._applyTransform(this.ctm.scale(x, y));
+        this._applyTransform(() => this.ctm.scale(x, y));
     }
 
     skew(x, y) {
-        this._applyTransform(this.ctm.skew(x, y));
+        this._applyTransform(() => this.ctm.skew(x, y));
     }
 
     drawShape(shape) {
@@ -82,6 +80,7 @@ class Graphics extends PIXI.Graphics {
     }
 
     restore() {
+        this.finishPoly();
         this.ctm = new Matrix(this._contexts.splice(this._contexts.length - 1, 1)[0]);
     }
 }
