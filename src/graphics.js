@@ -40,33 +40,54 @@ class Graphics extends PIXI.Graphics {
         super.beginFill(color, alpha);
     }
 
-    // context transformation matrix ops so that we can move around in graphics, without having to
-    // go through children
-
-    _applyTransform(func) {
-        // finish any drawing before we start moving around
-        this.finishPoly();
-        func();
+    // translated funcs (ones that recalc the points straight away, based on the current matrix)
+    // XXX - add any others that need translating. e.g. arcTo
+    moveTo(x, y) {
+        super.moveTo(...this.ctm.apply(x, y));
+        this.currentPath.transformed = true;
     }
 
-    translate(x, y) {
-        this._applyTransform(() => this.ctm.translate(x, y));
+    lineTo(x, y) {
+        super.lineTo(...this.ctm.apply(x, y));
+    }
 
+    arc(cx, cy, radius, startAngle, endAngle, anticlockwise) {
+        super.arc(...this.ctm.apply(cx, cy), radius, startAngle, endAngle, anticlockwise);
+    }
+
+    arcTo(x1, y1, x2, y2, radius) {
+        super.arcTo(...this.ctm.apply(x1, y1), ...this.ctm.apply(x2, y2), radius);
+    }
+
+    bezierCurveTo(cpX, cpY, cpX2, cpY2, toX, toY) {
+        super.bezierCurveTo(...this.ctm.apply(cpX, cpY), ...this.ctm.apply(cpX2, cpY2), ...this.ctm.apply(toX, toY));
+    }
+
+    // context matrix transformations
+    translate(x, y) {
+        this.ctm.translate(x, y);
     }
     rotate(rad) {
-        this._applyTransform(() => this.ctm.rotate(rad));
+        this.ctm.rotate(rad);
     }
     scale(x, y) {
-        this._applyTransform(() => this.ctm.scale(x, y));
+        this.ctm.scale(x, y);
     }
 
     skew(x, y) {
-        this._applyTransform(() => this.ctm.skew(x, y));
+        this.ctm.skew(x, y);
     }
 
     drawShape(shape) {
         // overriding graphics drawShape so that we can feed it in our own transformation matrix
-        let matrix = new PIXI.Matrix(...this.ctm.toArray());
+        let matrix = new PIXI.Matrix();
+        if (shape.transformed) {
+            // the interactive drawing bits that can have transforms in between will be translated on the fly
+            // so that you can have moveto -> rotate -> lineto -> rotate etc.
+            // in that case we don't need double the transform
+        } else {
+            matrix.set(...this.ctm.toArray());
+        }
         if (!this._holeMode) {
             this._geometry.drawShape(shape, this._fillStyle.clone(), this._lineStyle.clone(), matrix);
         } else {
