@@ -31,6 +31,7 @@ class LoopKit {
             autoDensity: true,
             preserveDrawingBuffer: true,
             clearBeforeRender: false,
+            transparent: !bgColor,
         });
 
         this._root = new PIXI.Container();
@@ -182,7 +183,7 @@ class LoopKit {
     }
 
     resize(evt) {
-        let box = this.canvas.parentElement.getBoundingClientRect();
+        let box = {width: this.canvas.parentElement.clientWidth, height: this.canvas.parentElement.clientHeight};
         [this.width, this.height] = [box.width, box.height];
         this.canvas.style.width = this.width;
         this.canvas.style.height = this.height;
