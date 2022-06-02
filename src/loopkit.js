@@ -29,9 +29,9 @@ class LoopKit {
             antialias: antialias !== undefined ? antialias : true,
             resolution: window.devicePixelRatio,
             autoDensity: true,
-            preserveDrawingBuffer: true,
-            clearBeforeRender: false,
-            transparent: !bgColor,
+            //preserveDrawingBuffer: true,
+            clearBeforeRender: true,
+            //backgroundAlpha: bgColor ? 1 : 0,
         });
 
         this._root = new PIXI.Container();
@@ -314,7 +314,7 @@ class LoopKit {
 
         // let's see if we can actually lose the context
         let gl = this.canvas.getContext("webgl2") || this.canvas.getContext("webgl");
-        gl.getExtension("WEBGL_lose_context").loseContext();
+        gl.getExtension("WEBGL_lose_context")?.loseContext();
 
         // remove any pointers
         this.canvas = null;
