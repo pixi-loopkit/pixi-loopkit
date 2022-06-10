@@ -1,4 +1,4 @@
-import * as BezierEasing from "bezier-easing";
+import bezier from "bezier-easing";
 
 function symmetrical(name, easeIn, easeOut) {
     // easeOut is inverse of easeIn, and easeInOut is half way ease-in and half way ease out
@@ -19,10 +19,10 @@ const Easing = {
     linear: t => t,
 
     // Bezier's roll your own + a few snatched from material design docs
-    bezier: (p1x, p1y, p2x, p2y) => BezierEasing(p1x, p1y, p2x, p2y),
-    material: t => BezierEasing(0.4, 0, 0.2, 1)(t),
-    materialDecelerated: t => BezierEasing(0, 0, 0.2, 1)(t),
-    materialAccelerated: t => BezierEasing(0.4, 0, 1, 1)(t),
+    bezier: (p1x, p1y, p2x, p2y) => bezier(p1x, p1y, p2x, p2y),
+    material: t => bezier(0.4, 0, 0.2, 1)(t),
+    materialDecelerated: t => bezier(0, 0, 0.2, 1)(t),
+    materialAccelerated: t => bezier(0.4, 0, 1, 1)(t),
 
     // Penner classic
     ...symmetrical("quad", t => Math.pow(t, 2)),
