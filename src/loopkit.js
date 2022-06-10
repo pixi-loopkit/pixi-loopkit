@@ -1,8 +1,8 @@
-import * as PIXI from "pixi.js";
+import {Renderer, Container, Ticker, utils as pixiUtils} from "pixi.js";
 import {Graphics, Loop, Beat} from ".";
 import Tar from "tar-js";
 
-PIXI.utils.skipHello();
+pixiUtils.skipHello();
 
 class LoopKit {
     constructor(container, {onFrame, antialias, bgColor, frames, debugKeystrokes, bpm, beatsPerLoop, onBeat, name}) {
@@ -24,7 +24,7 @@ class LoopKit {
         // solely for exports but who knows, maybe we'll find a higher purpose later
         this.name = name;
 
-        this.renderer = new PIXI.Renderer({
+        this.renderer = new Renderer({
             view: this.canvas,
             antialias: antialias !== undefined ? antialias : true,
             resolution: window.devicePixelRatio,
@@ -34,7 +34,7 @@ class LoopKit {
             //backgroundAlpha: bgColor ? 1 : 0,
         });
 
-        this._root = new PIXI.Container();
+        this._root = new Container();
         this.bg = new Graphics();
         if (bgColor) {
             this.bgColor = bgColor;
@@ -53,7 +53,7 @@ class LoopKit {
 
         this._renderPending = null;
 
-        this.ticker = new PIXI.Ticker();
+        this.ticker = new Ticker();
         this.ticker.add(this._onFrame);
         this.ticker.stop();
         this.resize();

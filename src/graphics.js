@@ -1,13 +1,13 @@
 import chroma from "chroma-js";
-import * as PIXI from "pixi.js";
-PIXI.utils.skipHello();
+import {Graphics as PixiGraphics, LINE_CAP, LINE_JOIN, Matrix as PixiMatrix, utils as PixiUtils} from "pixi.js";
+PixiUtils.skipHello();
 
 import {Matrix} from "./matrix.js";
 
-class Graphics extends PIXI.Graphics {
+class Graphics extends PixiGraphics {
     constructor() {
         super();
-        this.ctm = new Matrix(); // cpntext translation matrix; grabbed from cairo
+        this.ctm = new Matrix(); // context translation matrix; grabbed from cairo
         this._contexts = [];
     }
 
@@ -21,8 +21,8 @@ class Graphics extends PIXI.Graphics {
         alpha = _setDefault(alpha, 1);
         alignment = _setDefault(alignment, 0.5);
         native = _setDefault(native, false);
-        cap = _setDefault(cap, PIXI.LINE_CAP.BUTT);
-        join = _setDefault(join, PIXI.LINE_JOIN.MITER);
+        cap = _setDefault(cap, LINE_CAP.BUTT);
+        join = _setDefault(join, LINE_JOIN.MITER);
         miterLimit = _setDefault(miterLimit, 10);
 
         if (typeof color != "number") {
@@ -80,7 +80,7 @@ class Graphics extends PIXI.Graphics {
 
     drawShape(shape) {
         // overriding graphics drawShape so that we can feed it in our own transformation matrix
-        let matrix = new PIXI.Matrix();
+        let matrix = new PixiMatrix();
         if (shape.transformed) {
             // the interactive drawing bits that can have transforms in between will be translated on the fly
             // so that you can have moveto -> rotate -> lineto -> rotate etc.
