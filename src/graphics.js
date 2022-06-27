@@ -70,11 +70,14 @@ class Graphics extends PixiGraphics {
     rotate(rad) {
         this.ctm.rotate(rad);
     }
-    scale(x, y) {
+
+    doScale(x, y) {
+        // the matrix operations ended up clashing with the `scale` property on graphics; what a mess
         this.ctm.scale(x, y);
     }
 
-    skew(x, y) {
+    doSkew(x, y) {
+        // the matrix operations ended up clashing with the `skew` property on graphics; what a mess
         this.ctm.skew(x, y);
     }
 
