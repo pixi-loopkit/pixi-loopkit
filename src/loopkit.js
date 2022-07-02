@@ -1,3 +1,4 @@
+import chroma from "chroma-js";
 import {Renderer, Container, Ticker, utils as pixiUtils} from "pixi.js";
 import {Graphics, Loop, Beat} from ".";
 import Tar from "tar-js";
@@ -23,6 +24,7 @@ class LoopKit {
 
         // solely for exports but who knows, maybe we'll find a higher purpose later
         this.name = name;
+        this.bgColor = bgColor ? chroma(bgColor).num() : null;
 
         this.renderer = new Renderer({
             view: this.canvas,
@@ -31,15 +33,12 @@ class LoopKit {
             autoDensity: true,
             //preserveDrawingBuffer: true,
             clearBeforeRender: true,
-            //backgroundAlpha: bgColor ? 1 : 0,
+            backgroundAlpha: bgColor ? 1 : 0,
+            backgroundColor: this.bgColor,
         });
 
         this._root = new Container();
-        this.bg = new Graphics();
-        if (bgColor) {
-            this.bgColor = bgColor;
-            this._root.addChild(this.bg);
-        }
+
         this.graphics = new Graphics();
         this._root.addChild(this.graphics);
 
@@ -54,8 +53,8 @@ class LoopKit {
         this._renderPending = null;
 
         this.ticker = new Ticker();
-        this.ticker.add(this._onFrame);
         this.ticker.stop();
+        this.ticker.add(this._onFrame);
         this.resize();
 
         this._fpsTs = [];
@@ -148,13 +147,17 @@ class LoopKit {
             return;
         }
 
-        window.cancelAnimationFrame(this._renderPending);
-        this._renderPending = window.requestAnimationFrame(() => {
-            if (this.onFrame) {
+        if (this.onFrame) {
+            window.cancelAnimationFrame(this._renderPending);
+            this._renderPending = window.requestAnimationFrame(() => {
                 this.onFrame(this.graphics, this.loop.frame);
-            }
+                this.renderer.render(this._root);
+            });
+        } else {
+            // no onFrame means we are dealing with someone who manage their own animation frames
+            // so we just insta-render
             this.renderer.render(this._root);
-        });
+        }
     }
 
     start() {
@@ -178,6 +181,9 @@ class LoopKit {
     removeChild(...child) {
         this.graphics.removeChild(...child);
     }
+    removeChildren() {
+        this.graphics.removeChildren();
+    }
     get children() {
         return this.graphics.children;
     }
@@ -188,13 +194,6 @@ class LoopKit {
         this.canvas.style.width = this.width;
         this.canvas.style.height = this.height;
         this.renderer.resize(box.width, box.height);
-
-        if (this.bgColor) {
-            this.bg.clear();
-            this.bg.beginFill(this.bgColor);
-            this.bg.drawRect(0, 0, this.width, this.height);
-            this.bg.endFill();
-        }
 
         this.render();
     }
@@ -252,12 +251,10 @@ class LoopKit {
         this.graphics.alpha = opacity || 0.2;
 
         this.loop.fullCircle((_frame, idx) => {
-            this.bg.visible = idx == 0; // we want our smear, so disable background after first frame
             this._onFrame(false);
             console.log("rendering", _frame, idx);
         });
         this.graphics.alpha = 1;
-        this.bg.visible = true;
 
         if (filename) {
             let objectURL = this.canvas.toDataURL();
