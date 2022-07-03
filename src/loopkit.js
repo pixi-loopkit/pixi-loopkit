@@ -191,10 +191,7 @@ class LoopKit {
     resize(evt) {
         let box = {width: this.canvas.parentElement.clientWidth, height: this.canvas.parentElement.clientHeight};
         [this.width, this.height] = [box.width, box.height];
-        this.canvas.style.width = this.width;
-        this.canvas.style.height = this.height;
         this.renderer.resize(box.width, box.height);
-
         this.render();
     }
 
