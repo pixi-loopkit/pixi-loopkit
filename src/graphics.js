@@ -11,6 +11,14 @@ class Graphics extends PixiGraphics {
         this._contexts = [];
     }
 
+    addChild(...child) {
+        // filter out nulls
+        child = child.filter(ch => ch);
+        if (child.length) {
+            super.addChild(...child);
+        }
+    }
+
     lineStyle(width, color, alpha, alignment, native, cap, join, miterLimit) {
         if (typeof width != "number") {
             // we have ourselves an options object rather than a full listing

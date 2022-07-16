@@ -1,3 +1,11 @@
+0.2.2
+======
+
+- loopkit core loop - optimize timestamp list for tracking fps to avoid any
+  unnecessary overhead
+- override pixi's addChild to fix explodes when addChild is called with no params
+
+
 0.2.1
 ======
 

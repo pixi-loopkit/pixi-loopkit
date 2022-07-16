@@ -58,7 +58,7 @@ class LoopKit {
         this.resize();
 
         this._fpsTs = [];
-        this._ticks = 0;
+        this._ticks = -1;
         this._fps = 0;
 
         if (onFrame) {
@@ -89,15 +89,12 @@ class LoopKit {
                 this.loop.tick();
             }
 
-            this._ticks += 1;
-            if (this._ticks == 6) {
-                // capture fps every 10 frames
-                this._ticks = 0;
-                this._fpsTs.push(Date.now());
-                this._fpsTs = this._fpsTs.slice(-3);
-                if (this._fpsTs.length == 3) {
-                    // the 3 - 1 is because we have n timestamps, but n-1 timespans
-                    let msPerFrame = (this._fpsTs[2] - this._fpsTs[0]) / 6 / (3 - 1);
+            this._ticks = (this._ticks + 1) % 18;
+            if (this._ticks % 6 == 0) {
+                let idx = (this._ticks % 18) / 6;
+                this._fpsTs[idx] = Date.now();
+                if (idx == 2) {
+                    let msPerFrame = (this._fpsTs[2] - this._fpsTs[0]) / 6 / 2;
                     this._fps = Math.round(1000 / msPerFrame);
                 }
             }
