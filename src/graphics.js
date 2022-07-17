@@ -9,6 +9,7 @@ class Graphics extends PixiGraphics {
         super();
         this.ctm = new Matrix(); // context translation matrix; grabbed from cairo
         this._contexts = [];
+        this.bounds = null;
     }
 
     addChild(...child) {
@@ -37,7 +38,7 @@ class Graphics extends PixiGraphics {
             // PIXI wants hex, we give it hex
             [color, alpha] = parseColor(color, alpha);
         }
-        super.lineStyle({width, color, alpha, alignment, native, cap, join, miterLimit});
+        return super.lineStyle({width, color, alpha, alignment, native, cap, join, miterLimit});
     }
 
     beginFill(color, alpha) {
@@ -45,7 +46,7 @@ class Graphics extends PixiGraphics {
             // PIXI wants hex, we give it hex
             [color, alpha] = parseColor(color, alpha);
         }
-        super.beginFill(color, alpha);
+        return super.beginFill(color, alpha);
     }
 
     // translated funcs (ones that recalc the points straight away, based on the current matrix)
@@ -53,40 +54,49 @@ class Graphics extends PixiGraphics {
     moveTo(x, y) {
         super.moveTo(...this.ctm.apply(x, y));
         this.currentPath.transformed = true;
+        return this;
     }
 
     lineTo(x, y) {
-        super.lineTo(...this.ctm.apply(x, y));
+        return super.lineTo(...this.ctm.apply(x, y));
     }
 
     arc(cx, cy, radius, startAngle, endAngle, anticlockwise) {
-        super.arc(...this.ctm.apply(cx, cy), radius, startAngle, endAngle, anticlockwise);
+        return super.arc(...this.ctm.apply(cx, cy), radius, startAngle, endAngle, anticlockwise);
     }
 
     arcTo(x1, y1, x2, y2, radius) {
-        super.arcTo(...this.ctm.apply(x1, y1), ...this.ctm.apply(x2, y2), radius);
+        return super.arcTo(...this.ctm.apply(x1, y1), ...this.ctm.apply(x2, y2), radius);
     }
 
     bezierCurveTo(cpX, cpY, cpX2, cpY2, toX, toY) {
-        super.bezierCurveTo(...this.ctm.apply(cpX, cpY), ...this.ctm.apply(cpX2, cpY2), ...this.ctm.apply(toX, toY));
+        return super.bezierCurveTo(
+            ...this.ctm.apply(cpX, cpY),
+            ...this.ctm.apply(cpX2, cpY2),
+            ...this.ctm.apply(toX, toY)
+        );
     }
 
     // context matrix transformations
     translate(x, y) {
         this.ctm.translate(x, y);
+        return this;
     }
     rotate(rad) {
         this.ctm.rotate(rad);
+        return this;
     }
 
     doScale(x, y) {
         // the matrix operations ended up clashing with the `scale` property on graphics; what a mess
         this.ctm.scale(x, y);
+        return this;
     }
 
     doSkew(x, y) {
         // the matrix operations ended up clashing with the `skew` property on graphics; what a mess
         this.ctm.skew(x, y);
+        return this;
     }
 
     drawShape(shape) {
@@ -109,11 +119,31 @@ class Graphics extends PixiGraphics {
 
     save() {
         this._contexts.push(new Matrix(this.ctm));
+        return this;
     }
 
     restore() {
         this.finishPoly();
         this.ctm = new Matrix(this._contexts.splice(this._contexts.length - 1, 1)[0]);
+        return this;
+    }
+
+    calculateBounds() {
+        // allow specifying bounds manually. use with caution and for containers that do not move around
+        // as if you crop it too conservatively and then move the parent, an out-of-view portion might
+        // get on the screen and not being rendered
+        if (this.bounds) {
+            this._bounds.clear();
+            this._bounds.addBounds({
+                minX: this.bounds.x1 || this.bounds.minX || 0,
+                maxX: this.bounds.x2 || this.bounds.maxX || 0,
+                minY: this.bounds.y1 || this.bounds.minY || 0,
+                maxY: this.bounds.y2 || this.bounds.maxY || 0,
+            });
+            this._bounds.updateID = this._boundsID;
+        } else {
+            super.calculateBounds();
+        }
     }
 }
 

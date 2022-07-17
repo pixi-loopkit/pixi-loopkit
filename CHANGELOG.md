@@ -1,3 +1,14 @@
+0.2.3
+======
+
+- Graphics function calls now return the graphics object to match Pixi's chaining
+  behavior
+- add experimental bounds property that allows telling pixi to not bother
+  calculating bounds. this is useful when you have an object that involves rendering
+  way bigger than you'd care to cache, for example. like a massive gradient 1% of
+  which you care about.
+
+
 0.2.2
 ======
 
