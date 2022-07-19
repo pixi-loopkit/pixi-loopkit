@@ -8,6 +8,7 @@ class Graphics extends PixiGraphics {
     constructor() {
         super();
         this.ctm = new Matrix(); // context translation matrix; grabbed from cairo
+        this._ctmTransformed = false;
         this._contexts = [];
         this.bounds = null;
     }
@@ -80,33 +81,38 @@ class Graphics extends PixiGraphics {
     // context matrix transformations
     translate(x, y) {
         this.ctm.translate(x, y);
+        this._ctmTransformed = true;
         return this;
     }
     rotate(rad) {
         this.ctm.rotate(rad);
+        this._ctmTransformed = true;
         return this;
     }
 
     doScale(x, y) {
         // the matrix operations ended up clashing with the `scale` property on graphics; what a mess
         this.ctm.scale(x, y);
+        this._ctmTransformed = true;
         return this;
     }
 
     doSkew(x, y) {
         // the matrix operations ended up clashing with the `skew` property on graphics; what a mess
         this.ctm.skew(x, y);
+        this._ctmTransformed = true;
         return this;
     }
 
     drawShape(shape) {
         // overriding graphics drawShape so that we can feed it in our own transformation matrix
-        let matrix = new PixiMatrix();
-        if (shape.transformed) {
+        let matrix = null;
+        if (shape.transformed || !this._ctmTransformed) {
             // the interactive drawing bits that can have transforms in between will be translated on the fly
             // so that you can have moveto -> rotate -> lineto -> rotate etc.
             // in that case we don't need double the transform
         } else {
+            matrix = new PixiMatrix();
             matrix.set(...this.ctm.toArray());
         }
         if (!this._holeMode) {
