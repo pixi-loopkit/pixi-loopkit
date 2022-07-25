@@ -1,3 +1,8 @@
+# 0.2.5
+
+-   Clean up Beat class some. Should be more usable now. For one the `discreet`
+    (now `fullCircle`) doesn't fire early anymore
+
 # 0.2.4
 
 -   Graphics - when drawing objects do not pass our CTM if it has no transformations

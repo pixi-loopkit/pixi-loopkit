@@ -1,21 +1,29 @@
 class Beat {
-    constructor(bpm, beatsPerLoop) {
+    constructor(bpm, beatsInLoop) {
+        // bpm is how many beats per minute are there. e.g. 60 bpm = 1 beat per second
+        // beatsInLoop is how many beats are required for a full loop, so if you set it to 10,
+        // a full loop will take 10 seconds at 60bpm (1 beat a second -> full loop is 10 seconds)
+        // if you pass in a fraction, e.g. beatsInLoop = 1/10, that would mean you want each beat to have 10 loops
+        // so it turns into loops-in-beat
+        // practically speaking, 2 beatsInLoop at 60bpm will give you 120 frames.
+        // this whole stuff is bit mind bendy
         this._bpm = bpm;
-        this._beatsPerLoop = beatsPerLoop;
+        this._beatsInLoop = beatsInLoop;
 
         this._beatTs = Date.now();
-        this._prevBeatTs = null;
 
         this._samples = [];
         this._prevSampleTs = null;
+
+        this._prevFrame = 0;
     }
 
     get bpm() {
         return this._bpm;
     }
 
-    get beatsPerLoop() {
-        return this._beatsPerLoop;
+    get beatsInLoop() {
+        return this._beatsInLoop;
     }
 
     set bpm(bpm) {
@@ -25,31 +33,27 @@ class Beat {
         this._bpm = bpm;
     }
 
-    set beatsPerLoop(beats) {
+    set beatsInLoop(beats) {
         let now = Date.now();
         let ms = now - this._beatTs;
-        this._beatTs = new Date(now - (ms / this._beatsPerLoop) * beats);
-        this._beatsPerLoop = beats;
+        this._beatTs = new Date(now - (ms / this._beatsInLoop) * beats);
+        this._beatsInLoop = beats;
     }
 
     tick() {
-        this._beatTs = this._beatTs || Date.now();
-        let time = Date.now();
-        let delta = (time - this._beatTs) / 1000;
+        let now = Date.now();
+        this._beatTs = this._beatTs || now;
+        let delta = (now - this._beatTs) / 1000;
         // instead of ticking, we tell loop which frame we're on
-        let next = ((delta * (this.bpm / 60)) / this.beatsPerLoop) % 1;
+        let next = ((delta * (this.bpm / 60)) / this._beatsInLoop) % 1;
 
-        let beatDelta = (delta * (this.bpm / 60)) % 1;
-        let discreet = null;
-        if (beatDelta > 0.95 && time - this._prevBeatTs > 300) {
-            this._prevBeatTs = time;
-            discreet = true;
-        }
-        return [next, discreet];
+        let beat = next < this._prevFrame;
+        this._prevFrame = next;
+        return [next, beat];
     }
 
     rewind(frame) {
-        this._beatTs = new Date(Date.now() - ((frame * 1000) / (this.bpm / 60)) * this.beatsPerLoop);
+        this._beatTs = new Date(Date.now() - ((frame * 1000) / (this.bpm / 60)) * this.beatsInLoop);
     }
 
     sample() {
@@ -95,7 +99,7 @@ class Beat {
                 .map(rec => parseInt(rec[0]));
 
             let avgBpms = Math.round(popularBpms.reduce((sum, cur) => sum + cur, 0) / popularBpms.length);
-            return avgBpms - avgBpms % 2;
+            return avgBpms - (avgBpms % 2);
         }
     }
 }
