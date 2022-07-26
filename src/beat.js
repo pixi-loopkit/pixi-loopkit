@@ -47,9 +47,12 @@ class Beat {
         // instead of ticking, we tell loop which frame we're on
         let next = ((delta * (this.bpm / 60)) / this._beatsInLoop) % 1;
 
-        let beat = next < this._prevFrame;
+        let stepDelta = next - this._prevFrame;
         this._prevFrame = next;
-        return [next, beat];
+
+        // returns current frame, boolean whether we encountered a beat, and finally delta between this and prev frame
+        // so you can do your own man
+        return [next, stepDelta < 0, stepDelta >= 0 ? stepDelta : stepDelta + 1];
     }
 
     rewind(frame) {
