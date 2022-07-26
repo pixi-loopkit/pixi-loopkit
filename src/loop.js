@@ -28,18 +28,18 @@ class Loop {
         this.frameFull = this._frames * frame;
     }
 
-    zig(times = 2) {
+    zig(times = 2, frame) {
         // splits frame's 0->1 into 0->1->0->1->0->1, N times.
         // times=1 matches input, times=2 will render 0->1->0, times=3 will render 0->1->0->1, etc
-        let frame = this.norm;
+        frame = frame == null ? this.norm : frame;
         let a = Math.floor(frame * times) % 2;
         let b = frame % (1 / times);
         return Math.abs(a - b * times);
     }
 
-    zigzag(times = 1) {
+    zigzag(times = 1, frame) {
         // zig and zag back, which means you always end back to where you started 0->1->0. equals to zig(2)
-        return this.zig(times * 2);
+        return this.zig(times * 2, frame);
     }
 
     fullCircle(callback) {
