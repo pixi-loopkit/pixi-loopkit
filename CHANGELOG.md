@@ -1,3 +1,8 @@
+# 0.2.6
+
+-   `Loop` tweaks
+-   Report delta frame back from `Beat.tick()`
+
 # 0.2.5
 
 -   Clean up Beat class some. Should be more usable now. For one the `discreet`
