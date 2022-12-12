@@ -8,4 +8,4 @@ npm install pixi-loopkit
 
 # Documentation
 
-Be sure to check out the docs! http://pixi-loopkit.org/
+Be sure to check out the docs! http://loopkit.tomstriker.org/
