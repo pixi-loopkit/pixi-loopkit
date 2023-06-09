@@ -1,6 +1,6 @@
 {
     "name": "pixi-loopkit",
-    "version": "0.2.6",
+    "version": "0.3.0",
     "description": "Create cool experiments and generate looping gifs as output",
     "repository": {
         "type": "git",

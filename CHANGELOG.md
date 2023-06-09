@@ -1,3 +1,7 @@
+# 0.3.0
+
+-   Bump pixi.js to v7+ and fix deprecations
+
 # 0.2.6
 
 -   `Loop` tweaks
