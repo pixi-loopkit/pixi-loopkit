@@ -1,6 +1,5 @@
 import chroma from "chroma-js";
 import {Graphics as PixiGraphics, LINE_CAP, LINE_JOIN, Matrix as PixiMatrix, utils as PixiUtils} from "pixi.js";
-PixiUtils.skipHello();
 
 import {Matrix} from "./matrix.js";
 

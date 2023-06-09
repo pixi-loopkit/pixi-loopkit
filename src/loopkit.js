@@ -3,8 +3,6 @@ import {Renderer, Container, Ticker, utils as pixiUtils} from "pixi.js";
 import {Graphics, Loop, Beat} from ".";
 import Tar from "tar-js";
 
-pixiUtils.skipHello();
-
 class LoopKit {
     constructor(container, {onFrame, antialias, bgColor, frames, debugKeystrokes, bpm, beatsPerLoop, onBeat, name}) {
         container = typeof container == "string" ? document.querySelector(container) : container;
@@ -34,7 +32,7 @@ class LoopKit {
             //preserveDrawingBuffer: true,
             clearBeforeRender: true,
             backgroundAlpha: bgColor ? 1 : 0,
-            backgroundColor: this.bgColor,
+            backgroundColor: this.bgColor || "#000",
         });
 
         this._root = new Container();
@@ -147,11 +145,14 @@ class LoopKit {
         if (this.onFrame) {
             window.cancelAnimationFrame(this._renderPending);
             this._renderPending = window.requestAnimationFrame(() => {
-                this.onFrame(this.graphics, this.loop.frame);
-                this.renderer.render(this._root);
+                if (this.onFrame && this.renderer) {
+                    // we double check the presence of the renderer and onframe to avoid exploding on destroy
+                    this.onFrame(this.graphics, this.loop.frame);
+                    this.renderer.render(this._root);
+                }
             });
         } else {
-            // no onFrame means we are dealing with someone who manage their own animation frames
+            // no onFrame means we are dealing with someone who are managing their own animation frames
             // so we just insta-render
             this.renderer.render(this._root);
         }
